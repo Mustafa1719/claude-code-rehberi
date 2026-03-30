@@ -1,0 +1,3269 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Code Rehberi — Kod Yazmadan AI ile Çalışmayı Öğren</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@400;500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+/* ── TOKENS ─────────────────────────────────────────── */
+:root {
+  --accent:      #2dd4bf;
+  --accent-dim:  #0d9488;
+  --accent-soft: rgba(45,212,191,.1);
+  --warn:        #f59e0b;
+  --warn-soft:   rgba(245,158,11,.1);
+  --purple:      #a78bfa;
+  --purple-soft: rgba(167,139,250,.1);
+  --green:       #34d399;
+  --green-soft:  rgba(52,211,153,.1);
+
+  --bg:      #0d1117;
+  --bg2:     #161b22;
+  --bg3:     #21262d;
+  --surface: #1c2128;
+  --border:  rgba(48,54,61,1);
+  --border-a: rgba(45,212,191,.2);
+
+  --text:    #e6edf3;
+  --text-2:  #8b949e;
+  --text-3:  #484f58;
+
+  --sidebar-w: 260px;
+  --toc-w:     220px;
+  --header-h:  56px;
+  --font-body: 'DM Sans', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-px:   'Press Start 2P', monospace;
+  --radius:    6px;
+  --tr:        160ms ease;
+}
+[data-theme="light"] {
+  --bg:      #ffffff;
+  --bg2:     #f6f8fa;
+  --bg3:     #eaeef2;
+  --surface: #ffffff;
+  --border:  #d0d7de;
+  --border-a: rgba(45,212,191,.3);
+  --text:    #1f2328;
+  --text-2:  #636c76;
+  --text-3:  #adb5bd;
+}
+
+/* ── RESET ──────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font-body);background:var(--bg);color:var(--text);font-size:15px;line-height:1.7;min-height:100vh}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+img{max-width:100%}
+
+/* ── HEADER ─────────────────────────────────────────── */
+#header {
+  position:fixed;top:0;left:0;right:0;height:var(--header-h);
+  background:var(--bg);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 20px;gap:16px;z-index:100;
+}
+.logo {
+  font-family:var(--font-px);font-size:9px;color:var(--accent);
+  text-shadow:0 0 20px rgba(45,212,191,.4);
+  white-space:nowrap;text-decoration:none;flex-shrink:0;
+}
+.logo:hover{text-decoration:none}
+.header-spacer{flex:1}
+.header-actions{display:flex;align-items:center;gap:8px}
+.btn-icon {
+  width:32px;height:32px;border-radius:var(--radius);border:1px solid var(--border);
+  background:transparent;color:var(--text-2);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:14px;
+  transition:var(--tr);
+}
+.btn-icon:hover{border-color:var(--border-a);color:var(--text);background:var(--bg2)}
+.hamburger{display:none}
+
+/* ── LAYOUT ─────────────────────────────────────────── */
+#layout {
+  display:flex;
+  margin-top:var(--header-h);
+  min-height:calc(100vh - var(--header-h));
+}
+
+/* ── SIDEBAR ─────────────────────────────────────────── */
+#sidebar {
+  width:var(--sidebar-w);flex-shrink:0;
+  position:sticky;top:var(--header-h);
+  height:calc(100vh - var(--header-h));
+  overflow-y:auto;overflow-x:hidden;
+  border-right:1px solid var(--border);
+  padding:16px 0 40px;
+  scrollbar-width:thin;scrollbar-color:var(--bg3) transparent;
+}
+#sidebar::-webkit-scrollbar{width:4px}
+#sidebar::-webkit-scrollbar-track{background:transparent}
+#sidebar::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:4px}
+
+.nav-home {
+  display:flex;align-items:center;gap:8px;
+  padding:6px 16px;margin:0 8px 4px;border-radius:var(--radius);
+  color:var(--text-2);font-size:13.5px;font-weight:500;
+  transition:var(--tr);cursor:pointer;
+}
+.nav-home:hover,.nav-home.active{background:var(--bg2);color:var(--text);text-decoration:none}
+.nav-home.active{color:var(--accent)}
+
+.nav-section-label {
+  font-size:11px;font-weight:600;text-transform:uppercase;
+  letter-spacing:.08em;color:var(--text-3);
+  padding:12px 24px 4px;
+}
+
+.nav-module {margin:2px 8px}
+.nav-module-toggle {
+  display:flex;align-items:center;gap:8px;
+  width:100%;padding:6px 12px;border-radius:var(--radius);
+  background:transparent;border:none;color:var(--text-2);
+  font-family:var(--font-body);font-size:13.5px;font-weight:500;
+  cursor:pointer;transition:var(--tr);text-align:left;
+}
+.nav-module-toggle:hover{background:var(--bg2);color:var(--text)}
+.nav-module-toggle.open{color:var(--text)}
+.nav-toggle-icon{margin-left:auto;font-size:10px;transition:transform var(--tr)}
+.nav-module-toggle.open .nav-toggle-icon{transform:rotate(90deg)}
+.nav-badge {
+  font-size:10px;padding:1px 6px;border-radius:20px;
+  background:var(--bg3);color:var(--text-3);font-weight:500;
+}
+
+.nav-lessons {
+  max-height:0;overflow:hidden;
+  transition:max-height 300ms cubic-bezier(.4,0,.2,1);
+}
+.nav-lessons.open{max-height:400px}
+
+.nav-lesson {
+  display:flex;align-items:center;gap:8px;
+  padding:5px 12px 5px 32px;margin:1px 0;border-radius:var(--radius);
+  color:var(--text-2);font-size:13px;cursor:pointer;
+  transition:var(--tr);
+}
+.nav-lesson:hover{background:var(--bg2);color:var(--text);text-decoration:none}
+.nav-lesson.active{
+  background:var(--accent-soft);color:var(--accent);font-weight:500;
+}
+.nav-lesson-num{
+  font-size:10px;font-family:var(--font-mono);
+  color:var(--text-3);flex-shrink:0;min-width:24px;
+}
+.nav-lesson.active .nav-lesson-num{color:var(--accent-dim)}
+
+/* ── MAIN ───────────────────────────────────────────── */
+#main {
+  flex:1;min-width:0;
+  padding:40px 48px 80px;
+  max-width:800px;
+}
+
+/* ── TOC ────────────────────────────────────────────── */
+#toc-col {
+  width:var(--toc-w);flex-shrink:0;
+  position:sticky;top:var(--header-h);
+  height:calc(100vh - var(--header-h));
+  overflow-y:auto;padding:24px 0 40px;
+  border-left:1px solid var(--border);
+  scrollbar-width:thin;scrollbar-color:var(--bg3) transparent;
+}
+#toc-col::-webkit-scrollbar{width:4px}
+.toc-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);padding:0 16px 8px}
+.toc-list{list-style:none}
+.toc-link {
+  display:block;padding:4px 16px;font-size:12.5px;
+  color:var(--text-2);border-left:2px solid transparent;
+  transition:var(--tr);line-height:1.5;
+}
+.toc-link:hover{color:var(--text);text-decoration:none;border-left-color:var(--border)}
+.toc-link.active{color:var(--accent);border-left-color:var(--accent)}
+
+/* ── OVERLAY (mobile) ───────────────────────────────── */
+#overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:90;
+}
+
+/* ═══════════════════════════════════════════════════════
+   HOMEPAGE
+══════════════════════════════════════════════════════════ */
+.home-hero {
+  padding:48px 0 40px;
+  border-bottom:1px solid var(--border);
+  margin-bottom:48px;
+}
+.hero-eyebrow {
+  font-size:11px;font-weight:600;text-transform:uppercase;
+  letter-spacing:.1em;color:var(--accent);margin-bottom:16px;
+}
+.hero-title {
+  font-family:var(--font-px);
+  font-size:clamp(14px,2.5vw,20px);
+  line-height:1.8;color:var(--text);
+  margin-bottom:16px;
+}
+.hero-title span{color:var(--accent);text-shadow:0 0 24px rgba(45,212,191,.35)}
+.hero-hook {
+  font-size: clamp(14px, 1.5vw, 18px);
+  color: var(--text);
+  font-weight: 500;
+  line-height: 1.6;
+  margin-bottom: 10px;
+  font-style: italic;
+}
+.hero-sub {
+  font-size:17px;color:var(--text-2);margin-bottom:24px;
+  max-width:560px;line-height:1.65;
+}
+.hero-badges{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:28px}
+.badge {
+  display:inline-flex;align-items:center;gap:5px;
+  padding:4px 12px;border-radius:20px;font-size:12.5px;font-weight:500;
+  border:1px solid var(--border);color:var(--text-2);background:var(--bg2);
+}
+.badge.green{border-color:rgba(52,211,153,.3);color:var(--green);background:var(--green-soft)}
+.badge.accent{border-color:var(--border-a);color:var(--accent);background:var(--accent-soft)}
+.btn-start {
+  display:inline-flex;align-items:center;gap:8px;
+  padding:10px 20px;border-radius:var(--radius);
+  background:var(--accent);color:#0d1117;
+  font-size:14px;font-weight:600;border:none;cursor:pointer;
+  transition:var(--tr);text-decoration:none;
+}
+.btn-start:hover{background:#5eead4;text-decoration:none;transform:translateY(-1px)}
+
+/* Hero image */
+.hero-image-wrap {
+  margin: 0 0 40px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  line-height: 0;
+}
+.hero-image {
+  width: 100%;
+  display: block;
+  max-height: 480px;
+  object-fit: cover;
+  object-position: center top;
+}
+
+/* Get started section */
+.getstarted-section {
+  margin-bottom: 48px;
+  padding: 28px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-a);
+  background: var(--accent-soft);
+}
+.getstarted-title {
+  font-size: 18px; font-weight: 700;
+  margin-bottom: 16px; color: var(--text);
+}
+.getstarted-links { display: flex; flex-direction: column; gap: 12px; }
+.getstarted-link {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 18px; border-radius: var(--radius);
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; transition: var(--tr); text-decoration: none;
+  color: var(--text);
+}
+.getstarted-link:hover {
+  border-color: var(--border-a); background: var(--surface);
+  text-decoration: none; color: var(--text);
+}
+.getstarted-link-icon { font-size: 20px; flex-shrink: 0; }
+.getstarted-link-body { flex: 1; }
+.getstarted-link-title { font-size: 14px; font-weight: 600; color: var(--text); }
+.getstarted-link-desc { font-size: 12.5px; color: var(--text-2); margin-top: 2px; }
+.getstarted-link-arrow { color: var(--accent); font-size: 16px; }
+.btn-download {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 20px; border-radius: var(--radius);
+  border: 1px solid var(--border-a); background: transparent;
+  color: var(--accent); font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: var(--tr); font-family: var(--font-body);
+}
+.btn-download:hover { background: var(--accent-soft); }
+.btn-download.loading { opacity: .6; pointer-events: none; }
+
+/* Feature grid */
+.home-section{margin-bottom:48px}
+.home-section-title{font-size:18px;font-weight:600;margin-bottom:20px;color:var(--text)}
+.feature-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.feature-card {
+  padding:20px;border-radius:var(--radius);
+  border:1px solid var(--border);background:var(--bg2);
+}
+.feature-icon{font-size:20px;margin-bottom:10px}
+.feature-title{font-size:14px;font-weight:600;margin-bottom:6px;color:var(--text)}
+.feature-desc{font-size:13.5px;color:var(--text-2);line-height:1.6}
+
+/* Module list */
+.module-list{display:flex;flex-direction:column;gap:12px}
+.module-card {
+  padding:20px 24px;border-radius:var(--radius);
+  border:1px solid var(--border);background:var(--bg2);
+  transition:var(--tr);cursor:pointer;
+  display:flex;align-items:flex-start;gap:16px;
+}
+.module-card:hover{border-color:var(--border-a);background:var(--surface)}
+.module-num {
+  font-family:var(--font-px);font-size:9px;color:var(--accent);
+  min-width:36px;padding-top:3px;
+}
+.module-info{flex:1}
+.module-title{font-size:15px;font-weight:600;margin-bottom:4px;color:var(--text)}
+.module-desc{font-size:13px;color:var(--text-2);margin-bottom:10px}
+.module-lessons-list{display:flex;flex-wrap:wrap;gap:6px}
+.module-lesson-pill {
+  font-size:11.5px;padding:3px 10px;border-radius:20px;
+  background:var(--bg3);color:var(--text-2);cursor:pointer;
+  transition:var(--tr);
+}
+.module-lesson-pill:hover{background:var(--accent-soft);color:var(--accent)}
+
+/* How it works */
+.steps-row{display:flex;flex-direction:column;gap:12px}
+.step-explainer {
+  display:flex;align-items:flex-start;gap:14px;
+  padding:16px 20px;border-radius:var(--radius);
+  border:1px solid var(--border);background:var(--bg2);
+}
+.step-tag-ex {
+  font-size:10px;font-weight:700;padding:3px 10px;border-radius:4px;
+  font-family:var(--font-mono);flex-shrink:0;margin-top:2px;
+}
+.step-tag-ex.wait{background:var(--warn-soft);color:var(--warn)}
+.step-tag-ex.action{background:var(--green-soft);color:var(--green)}
+.step-tag-ex.user{background:var(--purple-soft);color:var(--purple)}
+.step-explainer-text{font-size:13.5px;color:var(--text-2);line-height:1.6}
+.step-explainer-text strong{color:var(--text)}
+
+/* Onboarding steps */
+.onboarding-steps{display:flex;flex-direction:column;gap:0}
+.onboarding-step{
+  display:flex;align-items:flex-start;gap:20px;
+  padding:24px 0;
+  border-bottom:1px solid var(--border);
+}
+.onboarding-step:last-child{border-bottom:none}
+.onboarding-num{
+  width:36px;height:36px;border-radius:50%;flex-shrink:0;
+  background:var(--accent);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;font-weight:700;margin-top:2px;
+}
+.onboarding-body{flex:1}
+.onboarding-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px}
+.onboarding-desc{font-size:13.5px;color:var(--text-2);line-height:1.65;margin-bottom:0}
+.onboarding-code{
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:6px;padding:10px 14px;
+  font-family:var(--font-mono);font-size:13px;
+  color:var(--accent);margin:10px 0 0;
+}
+.onboarding-note{
+  margin-top:12px;padding:10px 14px;
+  background:var(--warn-soft);border-left:3px solid var(--warn);
+  border-radius:0 6px 6px 0;
+  font-size:13px;color:var(--text-2);line-height:1.6;
+}
+.onboarding-options{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+.onboarding-option{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius);padding:12px 16px;
+}
+.onboarding-option-label{font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.onboarding-option-text{font-size:13px;color:var(--text-2);line-height:1.6}
+.onboarding-action{margin-top:12px}
+
+/* OS tabs */
+.os-tabs{display:flex;gap:0;margin:10px 0 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border)}
+.os-tab{flex:1;padding:7px 12px;font-size:12px;font-weight:600;text-align:center;cursor:pointer;background:var(--bg2);color:var(--text-3);border:none;font-family:var(--font-body);transition:var(--tr)}
+.os-tab.active{background:var(--accent);color:#fff}
+.os-content{display:none;margin-top:10px}
+.os-content.active{display:block}
+
+/* Copy button */
+.code-wrap{position:relative;margin:10px 0 0}
+.code-wrap pre,.code-wrap .onboarding-code{margin:0}
+.copy-btn{
+  position:absolute;top:8px;right:8px;
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:4px;padding:4px 8px;
+  font-size:11px;color:var(--text-3);cursor:pointer;
+  transition:var(--tr);display:flex;align-items:center;gap:4px;
+}
+.copy-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+.copy-btn.copied{background:var(--green);color:#fff;border-color:var(--green)}
+.onboarding-download-btn{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:12px 22px;border-radius:var(--radius);
+  background:var(--accent);color:#fff;
+  font-size:14px;font-weight:600;cursor:pointer;
+  transition:var(--tr);border:none;font-family:var(--font-body);
+}
+.onboarding-download-btn:hover{opacity:.88}
+.onboarding-download-btn.loading{opacity:.6;pointer-events:none}
+
+/* Bottom CTA */
+.bottom-cta{padding:40px 0 24px;text-align:center;border-top:1px solid var(--border);margin-top:8px}
+.bottom-cta-label{color:var(--text-2);font-size:14px;margin-bottom:20px}
+.next-steps-box{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius);padding:24px;text-align:left;margin-top:8px;
+}
+.next-steps-title{font-size:13px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:16px}
+.next-steps-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.next-step-item{display:flex;align-items:flex-start;gap:10px;flex:1;min-width:160px}
+.next-step-num{
+  width:24px;height:24px;border-radius:50%;flex-shrink:0;
+  background:var(--accent-soft);color:var(--accent);
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;margin-top:1px;
+}
+.next-step-text{font-size:13px;color:var(--text-2);line-height:1.55}
+.next-step-text strong{color:var(--text)}
+.next-step-arrow{color:var(--text-3);font-size:18px;flex-shrink:0}
+
+/* FAQ */
+.faq-list{display:flex;flex-direction:column;gap:0}
+.faq-item{padding:18px 0;border-bottom:1px solid var(--border)}
+.faq-item:last-child{border-bottom:none}
+.faq-q{font-size:14px;font-weight:600;color:var(--text);margin-bottom:8px}
+.faq-a{font-size:13.5px;color:var(--text-2);line-height:1.65}
+
+/* ═══════════════════════════════════════════════════════
+   LESSON CONTENT
+══════════════════════════════════════════════════════════ */
+.lesson-header{margin-bottom:32px;padding-bottom:24px;border-bottom:1px solid var(--border)}
+.lesson-breadcrumb{font-size:12px;color:var(--text-3);margin-bottom:12px}
+.lesson-breadcrumb a{color:var(--text-3)}
+.lesson-breadcrumb a:hover{color:var(--accent)}
+.lesson-breadcrumb span{margin:0 6px}
+.lesson-title{font-size:26px;font-weight:700;color:var(--text);line-height:1.3}
+.lesson-meta{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+.lesson-badge{font-size:11.5px;padding:3px 10px;border-radius:20px;background:var(--bg3);color:var(--text-2)}
+
+.lesson-body h1{font-size:22px;font-weight:700;margin:32px 0 12px;color:var(--text)}
+.lesson-body h2{font-size:18px;font-weight:600;margin:28px 0 10px;color:var(--text);padding-top:8px;border-top:1px solid var(--border)}
+.lesson-body h3{font-size:15px;font-weight:600;margin:20px 0 8px;color:var(--text)}
+.lesson-body p{margin-bottom:14px;color:var(--text-2);line-height:1.75}
+.lesson-body strong{color:var(--text);font-weight:600}
+.lesson-body em{color:var(--text);font-style:italic}
+.lesson-body hr{border:none;border-top:1px solid var(--border);margin:24px 0}
+.lesson-body ul,.lesson-body ol{padding-left:20px;margin-bottom:14px}
+.lesson-body li{color:var(--text-2);margin-bottom:4px;line-height:1.7}
+
+.lesson-body code {
+  font-family:var(--font-mono);font-size:12.5px;
+  background:var(--bg3);color:var(--accent);
+  padding:2px 6px;border-radius:4px;
+}
+.lesson-body pre {
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius);padding:16px 20px;
+  overflow-x:auto;margin:16px 0;
+  font-family:var(--font-mono);font-size:12.5px;line-height:1.65;
+  color:var(--text);
+}
+.lesson-body pre code{background:none;padding:0;color:inherit;font-size:inherit}
+
+.lesson-body blockquote {
+  border-left:3px solid var(--accent-dim);
+  padding:12px 20px;margin:16px 0;
+  background:var(--accent-soft);border-radius:0 var(--radius) var(--radius) 0;
+}
+.lesson-body blockquote p{color:var(--text);margin:0;font-style:italic}
+
+/* Tables */
+.lesson-body table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13.5px}
+.lesson-body th {
+  padding:8px 12px;text-align:left;font-weight:600;
+  background:var(--bg3);color:var(--text);
+  border:1px solid var(--border);font-size:12.5px;
+}
+.lesson-body td {
+  padding:8px 12px;color:var(--text-2);
+  border:1px solid var(--border);vertical-align:top;
+}
+.lesson-body tr:nth-child(even) td{background:var(--bg2)}
+
+/* WAIT / ACTION / USER steps */
+.step {
+  display:flex;align-items:flex-start;gap:12px;
+  padding:14px 16px;border-radius:var(--radius);
+  margin:16px 0;
+}
+.step-tag {
+  font-size:9px;font-weight:700;padding:4px 8px;border-radius:4px;
+  font-family:var(--font-mono);flex-shrink:0;margin-top:2px;letter-spacing:.05em;
+}
+.step-text{font-size:14px;line-height:1.65;flex:1}
+
+.step-wait{background:var(--warn-soft);border:1px solid rgba(245,158,11,.2)}
+.step-wait .step-tag{background:var(--warn-soft);color:var(--warn);border:1px solid rgba(245,158,11,.3)}
+.step-wait .step-text{color:var(--text)}
+
+.step-action{background:var(--green-soft);border:1px solid rgba(52,211,153,.2)}
+.step-action .step-tag{background:var(--green-soft);color:var(--green);border:1px solid rgba(52,211,153,.3)}
+.step-action .step-text{color:var(--text)}
+
+.step-user{background:var(--purple-soft);border:1px solid rgba(167,139,250,.2)}
+.step-user .step-tag{background:var(--purple-soft);color:var(--purple);border:1px solid rgba(167,139,250,.3)}
+.step-user .step-text{color:var(--text-2);font-style:italic}
+
+/* Lesson download button */
+.lesson-download-wrap {
+  margin: 20px 0 24px;
+}
+
+/* Video player */
+.lesson-video-wrap {
+  margin: 24px 0 28px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  position: relative;
+}
+.lesson-video-wrap video {
+  width: 100%;
+  display: block;
+  border-radius: 12px;
+}
+.lesson-video-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-3);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.lesson-video-label::before {
+  content: '▶';
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px; height: 20px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 50%;
+  font-size: 8px;
+}
+
+/* Preview banner */
+.lesson-preview-banner{
+  font-size:12.5px;color:var(--text-3);
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius);padding:9px 14px;
+  margin-bottom:24px;
+}
+
+/* Module complete card */
+.module-complete-card{
+  display:flex;align-items:flex-start;gap:16px;
+  margin-top:36px;padding:20px 24px;border-radius:var(--radius);
+  background:var(--accent-soft);border:1px solid rgba(45,212,191,.25);
+}
+.module-complete-card.final{
+  background:linear-gradient(135deg,var(--accent-soft),var(--green-soft));
+  border-color:rgba(45,212,191,.3);
+}
+.module-complete-icon{font-size:22px;flex-shrink:0;margin-top:2px}
+.module-complete-body{flex:1}
+.module-complete-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px}
+.module-complete-desc{font-size:13.5px;color:var(--text-2);line-height:1.6}
+.module-complete-action{
+  display:inline-flex;align-items:center;gap:8px;
+  margin-top:14px;padding:10px 18px;border-radius:var(--radius);
+  background:var(--accent);color:#fff;font-size:13.5px;font-weight:600;
+  cursor:pointer;transition:var(--tr);
+}
+.module-complete-action:hover{opacity:.88}
+
+/* Prev/Next navigation */
+.lesson-nav {
+  display:flex;gap:12px;margin-top:48px;padding-top:24px;
+  border-top:1px solid var(--border);
+}
+.lesson-nav-btn {
+  flex:1;padding:14px 20px;border-radius:var(--radius);
+  border:1px solid var(--border);background:var(--bg2);
+  color:var(--text-2);font-size:13.5px;cursor:pointer;
+  transition:var(--tr);display:flex;flex-direction:column;gap:4px;
+  text-align:left;
+}
+.lesson-nav-btn.next{text-align:right}
+.lesson-nav-btn:hover{border-color:var(--border-a);background:var(--surface);color:var(--text)}
+.lesson-nav-label{font-size:10.5px;color:var(--text-3);text-transform:uppercase;letter-spacing:.07em;font-weight:600}
+.lesson-nav-title{font-size:14px;font-weight:500;color:var(--text)}
+
+/* ── RESPONSIVE ─────────────────────────────────────── */
+@media(max-width:1100px){
+  #toc-col{display:none}
+  #main{max-width:none;padding:32px 40px 60px}
+}
+@media(max-width:768px){
+  #sidebar{
+    position:fixed;left:0;top:var(--header-h);
+    height:calc(100vh - var(--header-h));
+    transform:translateX(-100%);transition:transform 300ms ease;
+    background:var(--bg);z-index:95;
+  }
+  #sidebar.open{transform:translateX(0)}
+  #overlay.open{display:block}
+  #main{padding:24px 20px 60px}
+  .hamburger{display:flex}
+  .feature-grid{grid-template-columns:1fr}
+  .hero-title{font-size:clamp(10px,3.5vw,16px)}
+}
+</style>
+</head>
+<body>
+
+<div id="header">
+  <a class="logo" href="#home" onclick="navigate('home')">CC REHBERİ</a>
+  <div class="header-spacer"></div>
+  <div class="header-actions">
+    <button class="btn-icon hamburger" id="hamburger" title="Menü" onclick="toggleSidebar()">☰</button>
+    <button class="btn-icon" id="themeBtn" title="Tema değiştir" onclick="toggleTheme()">🌙</button>
+  </div>
+</div>
+
+<div id="overlay" onclick="toggleSidebar()"></div>
+
+<div id="layout">
+  <nav id="sidebar">
+    <a class="nav-home active" id="nav-home" onclick="navigate('home')" href="#home">
+      <span>🏠</span> Ana Sayfa
+    </a>
+    <div class="nav-section-label">Modüller</div>
+
+    <div class="nav-module">
+      <button class="nav-module-toggle open" onclick="toggleModule(this)">
+        <span>M0</span> Neden?
+        <span class="nav-badge">3</span>
+        <span class="nav-toggle-icon">▶</span>
+      </button>
+      <div class="nav-lessons open">
+        <a class="nav-lesson" onclick="navigate('lesson-0-0')" href="#lesson-0-0"><span class="nav-lesson-num">0-0</span>Hoş Geldin</a>
+        <a class="nav-lesson" onclick="navigate('lesson-0-1')" href="#lesson-0-1"><span class="nav-lesson-num">0-1</span>Neden Claude Code?</a>
+        <a class="nav-lesson" onclick="navigate('lesson-0-2')" href="#lesson-0-2"><span class="nav-lesson-num">0-2</span>Büyük Resim</a>
+      </div>
+    </div>
+
+    <div class="nav-module">
+      <button class="nav-module-toggle" onclick="toggleModule(this)">
+        <span>M1</span> İlk Temas
+        <span class="nav-badge">4</span>
+        <span class="nav-toggle-icon">▶</span>
+      </button>
+      <div class="nav-lessons">
+        <a class="nav-lesson" onclick="navigate('lesson-1-1')" href="#lesson-1-1"><span class="nav-lesson-num">1-1</span>Kurulum</a>
+        <a class="nav-lesson" onclick="navigate('lesson-1-2')" href="#lesson-1-2"><span class="nav-lesson-num">1-2</span>İndir ve Başla</a>
+        <a class="nav-lesson" onclick="navigate('lesson-1-3')" href="#lesson-1-3"><span class="nav-lesson-num">1-3</span>İlk Oturum</a>
+        <a class="nav-lesson" onclick="navigate('lesson-1-4')" href="#lesson-1-4"><span class="nav-lesson-num">1-4</span>Görsel Çalışma Alanı</a>
+      </div>
+    </div>
+
+    <div class="nav-module">
+      <button class="nav-module-toggle" onclick="toggleModule(this)">
+        <span>M2</span> Temel Beceriler
+        <span class="nav-badge">3</span>
+        <span class="nav-toggle-icon">▶</span>
+      </button>
+      <div class="nav-lessons">
+        <a class="nav-lesson" onclick="navigate('lesson-2-1')" href="#lesson-2-1"><span class="nav-lesson-num">2-1</span>Dosyalarla Çalışmak</a>
+        <a class="nav-lesson" onclick="navigate('lesson-2-2')" href="#lesson-2-2"><span class="nav-lesson-num">2-2</span>Temel Komutlar</a>
+        <a class="nav-lesson" onclick="navigate('lesson-2-3')" href="#lesson-2-3"><span class="nav-lesson-num">2-3</span>CLAUDE.md — Hafıza</a>
+      </div>
+    </div>
+
+    <div class="nav-module">
+      <button class="nav-module-toggle" onclick="toggleModule(this)">
+        <span>M3</span> Güç Özellikleri
+        <span class="nav-badge">3</span>
+        <span class="nav-toggle-icon">▶</span>
+      </button>
+      <div class="nav-lessons">
+        <a class="nav-lesson" onclick="navigate('lesson-3-1')" href="#lesson-3-1"><span class="nav-lesson-num">3-1</span>Skills</a>
+        <a class="nav-lesson" onclick="navigate('lesson-3-2')" href="#lesson-3-2"><span class="nav-lesson-num">3-2</span>Ajanlar</a>
+        <a class="nav-lesson" onclick="navigate('lesson-3-3')" href="#lesson-3-3"><span class="nav-lesson-num">3-3</span>Plan Modu</a>
+      </div>
+    </div>
+
+    <div class="nav-module">
+      <button class="nav-module-toggle" onclick="toggleModule(this)">
+        <span>M4</span> Kendi Sistemin
+        <span class="nav-badge">3</span>
+        <span class="nav-toggle-icon">▶</span>
+      </button>
+      <div class="nav-lessons">
+        <a class="nav-lesson" onclick="navigate('lesson-4-1')" href="#lesson-4-1"><span class="nav-lesson-num">4-1</span>Sistem Düşüncesi</a>
+        <a class="nav-lesson" onclick="navigate('lesson-4-2')" href="#lesson-4-2"><span class="nav-lesson-num">4-2</span>Kendi İş Akışın</a>
+        <a class="nav-lesson" onclick="navigate('lesson-4-3')" href="#lesson-4-3"><span class="nav-lesson-num">4-3</span>Sonraki Adımlar</a>
+      </div>
+    </div>
+  </nav>
+
+  <main id="main"></main>
+
+  <aside id="toc-col">
+    <div class="toc-label">Bu Sayfada</div>
+    <ul class="toc-list" id="toc-list"></ul>
+  </aside>
+</div>
+
+<script>
+/* ══════════════════════════════════════════
+   LESSON DATA
+══════════════════════════════════════════ */
+/* ── OS Tab switcher ── */
+function switchOS(btn, prefix, os){
+  const group = btn.closest('.onboarding-body');
+  group.querySelectorAll('.os-tab').forEach(t=>t.classList.remove('active'));
+  group.querySelectorAll('.os-content').forEach(c=>c.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(prefix+'-'+os).classList.add('active');
+}
+
+/* ── Copy code button ── */
+function copyCode(btn){
+  const pre = btn.closest('.code-wrap').querySelector('pre');
+  navigator.clipboard.writeText(pre.innerText).then(()=>{
+    const orig = btn.innerHTML;
+    btn.innerHTML = '✓ Kopyalandı';
+    btn.classList.add('copied');
+    setTimeout(()=>{ btn.innerHTML = orig; btn.classList.remove('copied'); }, 1800);
+  });
+}
+
+const LESSONS = {
+'lesson-0-0': {
+  title: 'Ders 0-0: Hoş Geldin',
+  module: 0, num: '0-0',
+  content: `*Claude Code'yi Claude Code'den öğrenmek ister misiniz? İzleyerek veya okuyarak değil, birlikte yaparak öğrenmek kulağa nasıl geliyor?*
+
+---
+
+Bak sana. Claude Code'u açmışsın. Hiç korkmadan. 😤
+
+Çoğu kurs sana bir şeyler anlatır. Sınavı geçersin, sertifika alırsın, sonra hiç kullanmazsın.
+
+Bu kurs farklı çalışıyor. Burada okumak değil, **yapmak** var.
+
+Her adımda ben seninle çalışıyorum — dosyaları ben oluşturuyorum, organize ben yapıyorum, kod ben yazıyorum. Sen yön gösteriyorsun.
+
+> Bu kursu **Mustafa Aydın** hazırladı. Sorular veya geri bildirimler için ulaşabilirsin:
+> [YouTube](https://www.youtube.com/@mustafa1aydin) · [LinkedIn](https://www.linkedin.com/in/mustafaaydin1/) · mustafaaydin@lab-mind.com
+
+---
+
+Daha önce bir kursu yarıda bıraktın mı?
+
+WAIT: Bıraktıysan neden bıraktığını bir düşün. Sıkıcı mıydı? Çok teorik miydi? Neye yarayacağı belirsiz miydi?
+
+USER: [Yanıtın ne olursa olsun — kabul edilebilir]
+
+---
+
+Bu kursu farklı kılan şey şu:
+
+**Ben seninle birlikte çalışıyorum.** Sen okuyorsun, ben yapıyorum. Beraber ilerliyoruz.
+
+Üç işaret göreceksin:
+
+**DÜŞÜN** → Dur. Bir şeyi düşün, dene ya da cevapla. Cevap vermeden ilerleme.
+
+**İZLE** → Ben bir şey yapıyorum. Ekranda değişiklikler göreceksin.
+
+**CEVAPLA** → Beklenen cevap türü — ne söylersen söyle, devam ederiz.
+
+---
+
+Şimdi İZLE'nin nasıl göründüğünü göstereyim.
+
+ACTION: Senin çalışma klasörüne [merhaba.txt] adında bir dosya oluşturuyorum. İçinde şu yazıyor: "Kurs başladı. Bu dosyayı Claude oluşturdu."
+
+Şimdi dosya sistemine bak (Finder / Dosya Gezgini). Dosya orada görünüyor olmalı.
+
+WAIT: Dosyayı buldun mu?
+
+USER: Evet / Hayır / Nerede bakacağımı bilmiyorum
+
+---
+
+Göremediysen sorun değil — bu kurs boyunca dosyaların nerede göründüğünü de öğreneceğiz.
+
+---
+
+## Öğrendiklerin
+
+- DÜŞÜN gördüğünde dur ve cevap ver
+- İZLE gördüğünde ekranı gözlemle
+- Bu kurs okumak değil, yapmak üzerine
+
+---
+
+Az önce Claude Code'u çalıştırdın. Dosya oluşturdu. Sana baktı.
+
+Bu kursun geri kalanında bunu 10 farklı şekilde yapacaksın — her seferinde daha hızlı, daha güçlü.
+
+**Sırada ne var:** Claude Code nedir ve neden ChatGPT'den farklıdır?
+
+**Devam etmek için:** "ders 0-1" yaz`
+},
+
+'lesson-0-1': {
+  title: 'Ders 0-1: Neden Claude Code?',
+  module: 0, num: '0-1',
+  content: `ChatGPT'ye bir şey yazıp "neden tam istediğimi yapmadı?" diye düşündüğün oluyor mu?
+
+Cevap şu: Aracı yanlış kullanıyordun değil — **yanlış aracı** kullanıyordun.
+
+ChatGPT ve Claude Code yüzeysel olarak benzer görünür. İkisi de yapay zeka, ikisi de Türkçe anlıyor.
+
+Ama biri **danışman**, diğeri **asistan yönetici** — ikisi çok farklı iş yapar.
+
+---
+
+WAIT: ChatGPT veya başka bir yapay zekaya bir iş yaptırmaya çalışıp hayal kırıklığı yaşadın mı? Ne oldu?
+
+USER: [Bir deneyim paylaşır ya da "hayır" der — ikisi de tamam]
+
+---
+
+Şöyle düşün:
+
+Bir çalışana "bu raporu nasıl yazmalıyım?" diye sorsaydın ne olurdu?
+
+Sana yöntemler anlatır. Tavsiyeler verir. Ama raporu yazmaz.
+
+Oysa "bu raporu yaz" deseydin — yazardı.
+
+İşte ChatGPT ile Claude Code'un farkı tam olarak bu.
+
+---
+
+## Araştırmacı mı, Direktör mü?
+
+| | ChatGPT | Claude Code |
+|-|---------|------------|
+| **Ne yapar?** | Söyler, açıklar, önerir | Yapar, oluşturur, organize eder |
+| **Dosya erişimi** | Yok (sohbet penceresinde kalır) | Bilgisayarındaki her dosyayı okur/yazar |
+| **Hafıza** | Her sohbet sıfırlanır | CLAUDE.md ile kalıcı hafıza |
+| **Çalışma şekli** | Soru-cevap | Görev al, planla, bitir |
+| **Benzetme** | Araştırmacı asistan | Direktör (COO) |
+
+---
+
+WAIT: Bu tabloda seni en çok şaşırtan satır hangisi? Neden?
+
+USER: [Bir satırı seçer ve neden şaşırdığını anlatır]
+
+---
+
+**Yapay Zeka Yetkinliği (AI Fluency)** diye bir kavram var.
+
+Anlam şu: İnsanlar arasında giderek büyüyen bir uçurum oluşuyor.
+
+Bir tarafta AI'ı sadece "chatbot gibi" kullananlar var — soru sorar, cevap alır, copy-paste yapar.
+
+Diğer tarafta AI'ı bir **çalışan gibi** kullananlar var — görev verir, sonuç bekler, tekrar eden işleri otomatikleştirir.
+
+Bu iki grup aynı araçları kullanıyor. Ama birincisi 1x çalışıyor, ikincisi 10x.
+
+Claude Code, ikinci gruba geçmeni sağlayan araç.
+
+> Anthropic'in CEO'su Dario Amodei 2026'da şöyle ifade etti: "Ne mümkün olduğu ile insanların büyük çoğunluğunun anladığı arasındaki uçurum hızla büyüyor. Sistemi doğru kuranlar, chatbot gibi kullananlardan dramatik biçimde farklı sonuçlar alıyor." — Yani araç aynı. Farkı yaratan kurulum ve kullanım biçimi.
+
+---
+
+WAIT: Şu an hangi gruba daha yakınsın? Ve hangi işini Claude Code'a devrederdin?
+
+USER: [Dürüst bir değerlendirme yapar — her cevap geçerli]
+
+---
+
+## Öğrendiklerin
+
+- ChatGPT anlatır, Claude Code yapar
+- Fark: dosya erişimi + kalıcı hafıza + görev modu
+- AI Fluency: aynı araç, farklı kullanım = farklı sonuç
+
+**Sırada ne var:** Claude Code'un içinde neler var? Nasıl "düşünüyor"?
+
+**Devam etmek için:** "ders 0-2" yaz`
+},
+
+'lesson-0-2': {
+  title: 'Ders 0-2: Büyük Resim',
+  module: 0, num: '0-2',
+  content: `Claude Code'u bir sohbet penceresi gibi görüyorsak — anlayamayız.
+
+Onu bir **işletim sistemi** gibi görmeliyiz.
+
+---
+
+WAIT: Bir şirkette sekreter ne yapar? Direktör ne yapar? İkisi arasındaki fark nedir?
+
+USER: [Kendi yorumunu paylaşır]
+
+---
+
+Tam. Sekreter söyleneni yapar. Direktör sistemi tasarlar ve yönetir.
+
+Claude Code'da sen direktörsün. Claude Code da hem direktörün sağ kolu hem de şirketin işletim sistemi.
+
+---
+
+## Claude Code'un Katman Haritası
+
+~~~
+SEN
+(direktör — ne yapılacağına karar veriyorsun)
+    ↓
+CLAUDE CODE
+(asistan + işletim sistemi)
+    │
+    ├── Dosya Sistemi
+    │   Bilgisayarındaki klasörler, dosyalar.
+    │
+    ├── Skills (Beceriler)
+    │   Claude'a öğrettiğin özel talimatlar.
+    │
+    ├── CLAUDE.md (Kalıcı Hafıza)
+    │   Her oturumda Claude'un okuduğu brifing belgesi.
+    │
+    └── MCP Bağlantıları (Dış Sistemler)
+        Google, Notion, Slack, veritabanları...
+~~~
+
+---
+
+WAIT: Bu haritada seni en çok ilgilendiren katman hangisi? Neden?
+
+USER: [Bir katmanı seçer]
+
+---
+
+Seçimin mantıklı. Her katmanı ilerleyen derslerde bizzat kullanacağız.
+
+Şimdi çok önemli bir şeyi söyleyeyim:
+
+**Terminal (siyah ekran) sadece konuşma yeridir.**
+
+Claude ile nasıl konuştuğun terminalden görünür. Ama asıl iş arka planda, dosyalarda olup bitiyor.
+
+~~~
+> Bu klasördeki dosyaları organize et.
+
+Claude terminalde cevap verir ama asıl iş —
+dosyaları taşımak, klasörler oluşturmak — dosya sisteminde gerçekleşir.
+~~~
+
+---
+
+WAIT: "Terminal sadece konuşma yeri" fikrini kendi cümlelerinle açıklar mısın?
+
+USER: [Kendi yorumunu paylaşır]
+
+---
+
+Modül 0 tamamlandı.
+
+| Ders | Kazanım |
+|------|---------|
+| 0-0 | Kursun DÜŞÜN/İZLE/CEVAPLA formatını anladın |
+| 0-1 | ChatGPT ile Claude Code arasındaki temel farkı gördün |
+| 0-2 | Claude Code'un katman haritasını kafanda canlandırdın |
+
+---
+
+## Öğrendiklerin
+
+- Sen direktörsün, Claude Code işletim sistemi
+- 4 katman: Dosyalar, Skills, Hafıza (CLAUDE.md), Bağlantılar
+- Terminal konuşma yeri — asıl iş dosyalarda olur
+
+**Sırada ne var:** Modül 1 — Claude Code'u gerçekten kurup açıyoruz.
+
+**Devam etmek için:** "modül 1" veya "ders 1-1" yaz`
+},
+
+'lesson-1-1': {
+  title: 'Ders 1-1: Kurulum',
+  module: 1, num: '1-1',
+  content: `Terminal kelimesini duyunca "bu benim için değil" diye düşündüysen — dur.
+
+Bu derste terminal nedir bilmeden Claude Code kuracaksın.
+
+VIDEO: https://www.youtube.com/watch?v=1c3pnCiLWAE | Kurulumu Nasıl Yaparız?
+
+> Diğer kurulum seçenekleri için [resmi dokümantasyonu](https://code.claude.com/docs) ziyaret edin.
+
+---
+
+WAIT: Hangi işletim sistemini kullanıyorsun?
+
+- **Mac** (Apple logosu olan bilgisayar)
+- **Windows** (Microsoft)
+- **Linux** (genellikle programcılar kullanır)
+
+USER: Mac / Windows / Linux
+
+---
+
+## Terminal Nedir?
+
+Terminal = bilgisayarına yazarak komut verdiğin siyah (veya beyaz) ekran.
+
+Mouse yerine klavye kullanırsın. Görsel bir arayüz yoktur. Ama çok güçlüdür.
+
+İlk bakışta ürkütücü görünebilir — bu normal. Ama merak et: milyonlarca geliştirici her gün burada çalışıyor. Senin de anlayabileceğin bir araç.
+
+| İşletim Sistemi | Nasıl Açılır |
+|----------------|-------------|
+| **Mac** | Cmd + Boşluk → "terminal" yaz → Enter |
+| **Windows** | Başlat menüsü → "PowerShell" yaz → Enter |
+| **Linux** | Ctrl + Alt + T |
+
+---
+
+WAIT: Terminali açtın mı? Ekranda ne görüyorsun?
+
+USER: [Ne gördüğünü anlatır]
+
+---
+
+## Kurulum Komutu
+
+Şimdi aşağıdaki komutu terminale yaz ve Enter'a bas:
+
+**Mac / Linux / WSL:**
+~~~
+curl -fsSL https://claude.ai/install.sh | bash
+~~~
+
+**Windows (PowerShell):**
+~~~
+irm https://claude.ai/install.ps1 | iex
+~~~
+
+> **Not:** Windows'ta kurulum için [Git for Windows](https://git-scm.com/downloads/win) yüklü olmalı.
+
+Kurulum 1-3 dakika sürebilir. Yüzlerce satır metin kayacak — normal.
+
+---
+
+WAIT: Kurulum tamamlandı mı? Son satırda ne yazıyor?
+
+USER: [Son satırı kopyalar ya da anlatır]
+
+---
+
+## Sorun Giderme
+
+| Hata Mesajı | Anlam | Çözüm |
+|------------|-------|-------|
+| command not found: curl | curl yüklü değil | Mac: brew install curl / Windows: PowerShell yöntemini dene |
+| permission denied | Yetki sorunu | sudo bash ile tekrar dene (Mac/Linux) |
+| network error | İnternet sorunu | Bağlantını kontrol et |
+| Windows'ta hata | Git yüklü değil | [git-scm.com](https://git-scm.com/downloads/win)'den kur, terminali yeniden aç |
+
+---
+
+## Kurulumu Doğrula
+
+~~~
+claude --version
+~~~
+
+Şuna benzer bir şey görmelisin:
+
+~~~
+claude 1.x.x
+~~~
+
+---
+
+## Giriş Yap
+
+~~~
+claude
+~~~
+
+İlk çalıştırmada Anthropic hesabına giriş yapman isteniyor. Tarayıcı açılacak — giriş yap, geri dön.
+
+> **Not:** Claude Code, **Claude Pro veya Max aboneliği** gerektirir. Ücretsiz hesapla çalışmaz. Abonelik için [claude.ai](https://claude.ai) adresini ziyaret et.
+
+Giriş tamamlandığında terminalde şunu göreceksin:
+
+~~~
+>
+~~~
+
+Bu, Claude Code'un seni beklediği anlamına geliyor.
+
+---
+
+WAIT: Terminalde > işaretini gördün mü?
+
+USER: Evet / Hayır
+
+---
+
+## Öğrendiklerin
+
+- Terminal siyah ekran değil, güçlü bir komut arayüzü
+- npm ile Claude Code kuruldu
+- claude komutuyla oturum açıldı
+
+**Sırada ne var:** İlk gerçek görevi veriyorsun — ve "sormak" ile "yaptırmak" farkını bizzat hissediyorsun.
+
+**Devam etmek için:** "ders 1-2" yaz`
+},
+
+'lesson-1-2': {
+  title: 'Ders 1-2: İndir ve Başla',
+  module: 1, num: '1-2',
+  content: `*Tamamlama süresi: ~5 dakika · Ön koşul: Kurulum (Ders 1-1)*
+
+---
+
+## 1. Kurs Dosyalarını İndir
+
+DOWNLOAD:
+
+Butona tıkla — \`claude-code-rehberi.zip\` İndirilenler klasörüne inecek.
+
+> **İndirme başarısız olursa:** [GitHub'dan manuel indir](https://github.com/Mustafa1719/claude-code-rehberi/releases/latest) → \`claude-code-rehberi.zip\` dosyasını seç.
+
+---
+
+WAIT: ZIP dosyası indi mi?
+
+USER: Evet / Hayır / Sorun yaşıyorum
+
+---
+
+## 2. ZIP'i Çıkart
+
+ZIP'e sağ tıkla → "Tümünü Çıkar" (Windows) veya çift tıkla (Mac). **Belgeler** klasörüne çıkart.
+
+---
+
+## 3. Claude Code'u Klasörden Başlat
+
+Terminaline şunu yaz:
+
+~~~
+cd ~/Documents/claude-code-rehberi
+claude
+~~~
+
+> Alternatif: \`claude-code-rehberi\` klasörüne sağ tıkla → "Yeni Terminal'de Aç" → \`claude\` yaz.
+
+> ⚠️ **Önemli:** Claude yalnızca başlatıldığı klasördeki dosyaları görür. Her zaman \`claude-code-rehberi\` klasörünün içinden başlat.
+
+---
+
+WAIT: \`>\` işaretini gördün mü? Claude hazır mı?
+
+USER: Evet / Hayır
+
+---
+
+## 4. Claude Code'u Başlat
+
+~~~
+claude
+~~~
+
+\`>\` işareti görünecek — Claude hazır.
+
+> ⚠️ **Önemli:** Claude yalnızca başlatıldığı klasördeki dosyaları görür. Her zaman \`claude-code-rehberi\` klasörünün içindeyken başlat — aksi halde \`/baslat-0-0\` gibi komutlar çalışmaz.
+
+---
+
+WAIT: \`>\` işaretini gördün mü?
+
+USER: Evet / Hayır
+
+---
+
+## 5. İlk Derse Başla
+
+~~~
+/baslat-0-0
+~~~
+
+Claude ders dosyasını okur, eğitmen moduna girer ve seni karşılar.
+
+Kaldığın yerden devam etmek için: \`/devam\`
+
+---
+
+## Sık Sorulan Sorular
+
+**İndirme konumunu değiştirebilir miyim?**
+Evet — ZIP'i istediğin klasöre çıkart. Sadece terminal komutundaki yolu ona göre değiştir.
+
+**Yarıda bırakıp devam edebilir miyim?**
+Evet — \`/devam\` yaz, Claude nerede kaldığını hatırlar.
+
+**İndirme başarısız olursa?**
+[GitHub Releases](https://github.com/Mustafa1719/claude-code-rehberi/releases/latest) sayfasından manuel indirebilirsin.
+
+---
+
+**Devam etmek için:** "ders 1-3" yaz`
+},
+
+'lesson-1-3': {
+  title: 'Ders 1-3: İlk Oturum',
+  module: 1, num: '1-3',
+  content: `Claude açık, \`>\` işareti görünüyor. İlk komutunu vermeden önce sana bir şeyi göstereceğim.
+
+---
+
+## Senaryo: Dağınık Dosyalar
+
+ACTION: scenarios/ilk-gorev/ klasöründe 8 dosya var. Hepsi karmaşık isimli, tarihsiz, düzensiz.
+
+~~~
+toplanti_notlari_son_FINAL_v3.txt
+rapor - kopya.docx
+Rapor_2024_TASLAK.docx
+musteri_gorusme_notlari.txt
+sunum_GUNCEL.pptx
+sunum_yedek_eski.pptx
+analiz_excel_son.xlsx
+TODO_listesi_BAKILACAK.txt
+~~~
+
+---
+
+WAIT: Bu klasörü görüyorsun. Şimdi bana şunu söyle: ChatGPT'ye nasıl sorardın bu sorunu?
+
+USER: ["Bu dosyaları nasıl organize etmeliyim?" gibi bir şey]
+
+---
+
+Dikkat et. "Nasıl organize etmeliyim?" diye sorsan ne alırsın?
+
+Bir liste alırsın. Tavsiyeler alırsın. Belki bir tablo alırsın.
+
+Ama dosyalar hâlâ yerinde durur.
+
+---
+
+## Sormak vs Yaptırmak
+
+| ❌ ChatGPT Modu (Sormak) | ✅ Claude Code Modu (Yaptırmak) |
+|--------------------------|--------------------------------|
+| "Bu dosyaları nasıl düzenlemeliyim?" | "Bu dosyaları düzenle." |
+| "Hangi klasör yapısını önerir misin?" | "Mantıklı bir klasör yapısı kur." |
+| "Bu raporu nasıl özetlemeliyim?" | "Bu raporu özetle." |
+| Tavsiye alırsın | Sonuç alırsın |
+
+Fark tek kelime: **nasıl** vs **yap**.
+
+---
+
+WAIT: Şimdi senden istiyorum: Bu 8 dosyayı organize etmemi söyle. Tek bir cümleyle.
+
+USER: [Bir komut yazar — "Bu dosyaları organize et" gibi]
+
+---
+
+ACTION: Klasörü şu yapıya göre düzenle:
+
+~~~
+scenarios/ilk-gorev/
+├── raporlar/
+├── sunumlar/
+├── notlar/
+├── analizler/
+└── gorevler/
+~~~
+
+Dosyalar taşındı. İsimlerdeki gereksiz ekler temizlendi.
+
+---
+
+WAIT: Klasöre bak. Dosyalar taşındı mı? Nasıl hissettirdi?
+
+USER: [Deneyimini paylaşır]
+
+---
+
+## Delegasyon Formülü
+
+~~~
+NE istiyorum  +  NASIL bir sonuç bekliyorum
+~~~
+
+Örnekler:
+- "Bu toplantı notlarını görev listesine dönüştür. Her görevin yanına sorumlu kişiyi yaz."
+- "Bu klasörü organize et. Tarihsiz dosyalara bugünün tarihini ekle."
+
+---
+
+## Öğrendiklerin
+
+- "Nasıl yapmalıyım?" sormak = tavsiye almak
+- "Yap." demek = iş bitmek
+- Delegasyon formülü: NE istiyorum + NASIL bir sonuç
+
+**Devam etmek için:** "ders 1-4" yaz`
+},
+
+'lesson-1-4': {
+  title: 'Ders 1-4: Görsel Çalışma Alanı',
+  module: 1, num: '1-4',
+  content: `Şu an terminalde Claude Code ile konuşuyorsun.
+
+Ama bir sorun var: dosyaların nerede, ne olduğunu göremiyorsun.
+
+---
+
+WAIT: Ders 1-3'te dosyalar taşındığında klasörü görmek için ne yaptın? Terminal dışına çıkmak zorunda kaldın mı?
+
+USER: [Evet / hayır / ne yaptığını anlatır]
+
+---
+
+Terminal'de konuşuyorsun ama dosyalar göremiyorsun. Kör uçmak gibi.
+
+Çözüm: **çift panel**.
+
+Sol tarafta Claude Code (terminal). Sağ tarafta dosyaların.
+
+---
+
+## Seçenekler
+
+| Araç | Nasıl | Uygunluk |
+|------|-------|---------|
+| **VS Code + Claude uzantısı** | Ücretsiz kod editörü, Claude entegrasyonu var | Önerilen |
+| **Nimbalyst** | Claude Code için özel uygulama | Terminal görmek istemeyenler |
+
+---
+
+## VS Code Kurulumu
+
+**Adım 1 — VS Code indir:**
+[code.visualstudio.com](https://code.visualstudio.com) adresine git → İşletim sistemine uygun versiyonu indir → Kur.
+
+**Adım 2 — Claude Code uzantısını kur:**
+Sol paneldeki Extensions (blok simgesi) tıkla → "Claude Code" ara → Anthropic tarafından yayınlanmış uzantıyı kur.
+
+**Adım 3 — Claude Code'u VS Code'dan başlat:**
+View → Terminal → terminale claude yaz.
+
+---
+
+WAIT: VS Code açık mı? Sol tarafta dosya ağacını, altta terminali görebiliyor musun?
+
+USER: Evet / Hayır / Nerede arayacağımı bilmiyorum
+
+---
+
+## Çift Panel'in Gücü
+
+~~~
+Sol: Dosya ağacı          |  Alt: Terminal (Claude Code)
+─────────────────────────────────────────────
+📁 projelerim/           |  > Bu klasörü organize et.
+  📁 raporlar/           |
+  📁 sunumlar/           |  [Claude çalışıyor...]
+                         |
+  📄 CLAUDE.md           |  Hazır. 8 dosya taşındı.
+~~~
+
+---
+
+## Bypass Permissions: Onay Yorgunluğunu Bitir
+
+Çift panel kurulduktan sonra fark edebilirsin: Claude her küçük adımda soru soruyor. "Bu dosyayı okuyabilir miyim?" "Bunu yapabilir miyim?"
+
+**Bypass Permissions** bu onayları kapatır — Claude işi bitirene kadar beklemeden devam eder.
+
+| Adım | Yapılacak |
+|------|-----------|
+| 1 | Sol panelde Extensions tıkla |
+| 2 | Kurulu uzantılar arasında Claude Code'u bul |
+| 3 | Ayarlar (dişli) → "Bypass Permissions" aktif et |
+
+WAIT: Bu ayarı buldun mu? Açıp kapatabildin mi?
+
+USER: Evet / Hayır / Nerede olduğunu bulamadım
+
+> **Ne Zaman Açmalı?** Tekrar eden, güvendiğin işlerde aç. İlk kez yaptığın büyük işlerde kapalı tut — her adımı görmek faydalı. Bu ayar bir sonraki derste öğreneceğin **Auto-Accept modunun** VS Code versiyonudur.
+
+---
+
+## Önemli: VS Code'da /exit Komutu
+
+VS Code eklentisinde terminal komutları (like /exit) çalışmaz — bunlar Claude Code'un terminal sürümüne özgü.
+
+| Ortam | Oturumu Kapatmak |
+|-------|-----------------|
+| **Terminal** | /exit veya Ctrl+C |
+| **VS Code eklentisi** | Sohbet panelini kapat (X) |
+
+---
+
+## Öğrendiklerin
+
+- Terminal tek başına kör uçmak gibi — dosyaları görmek gerekiyor
+- VS Code + Claude uzantısı = çift panel çalışma alanı
+- Bypass Permissions ile onay yorgunluğunu bitirirsin
+- Dosyalar hareket ederken canlı izleyebiliyorsun
+
+**Devam etmek için:** "modül 2" veya "ders 2-1" yaz`
+},
+
+'lesson-2-1': {
+  title: 'Ders 2-1: Dosyalarla Çalışmak',
+  module: 2, num: '2-1',
+  content: `Birinin sana 20 klasör dolusu dosya verdiğini hayal et. "Bunları analiz et" dedi ve gitti.
+
+ChatGPT'ye açamazsın. Email'e yapıştıramazsın.
+
+Claude Code'da tek bir sembolle hepsini işaret edebilirsin: **@**
+
+---
+
+WAIT: Şu ana kadar dosyalarla çalışırken en çok neyi zaman alıyordu? (Aramak? Kopyalamak? Özetlemek?)
+
+USER: [Deneyimini paylaşır]
+
+---
+
+## @ Sembolü Nedir?
+
+@ = "şu dosyaya / klasöre bak" demek.
+
+~~~
+@dosya_adi.txt    → tek dosyayı referans al
+@klasor_adi/      → tüm klasörü referans al
+~~~
+
+Örnek komutlar:
+
+~~~
+@toplanti_notu.txt dosyasındaki görevleri listele
+@musteriler/ klasöründeki tüm mailleri özetle
+@rapor.pdf içindeki sayıları bir tabloya dök
+~~~
+
+---
+
+## 5 Temel Desen
+
+| # | Desen | Ne Yapar | Örnek |
+|---|-------|---------|-------|
+| 1 | **Tek Dosya → Çıkar** | Bir dosyadan bilgi çek | @toplanti.txt görevleri listele |
+| 2 | **Klasör → Sentezle** | Birçok dosyayı tek bakışta analiz et | @musteriler/ ortak şikayetleri bul |
+| 3 | **Şablon Uygula** | Dosya + format = tutarlı çıktı | @veri.xlsx haftalık rapor şablonuna dök |
+| 4 | **Görsel → Analiz** | Ekran görüntüsü yapıştır | Ctrl+V → "Bu görseldeki metni çıkar" |
+| 5 | **Web → Araştır** | İnternetten bilgi topla | "Claude Code için en iyi kaynakları bul" |
+
+---
+
+WAIT: Bu 5 desenden hangisi senin için en kullanışlı? Hangi iş için kullanırdın?
+
+USER: [Bir desen seçer]
+
+---
+
+ACTION: scenarios/dosya-kaos/ klasörünün içeriğini listele ve kullanıcıya göster.
+
+---
+
+WAIT: @scenarios/dosya-kaos/ yazarak bu klasördeki dosyaları organize etmemi söyle.
+
+USER: [Komutunu yazar]
+
+---
+
+## Pratik İpuçları
+
+**Büyük dosyalarda:** Claude'un bir "bağlam penceresi" (context window) var. Çok büyük dosyalarda /compact komutuyla sıkıştır.
+
+**Çok sayıda dosyada:** Önce /plan ile planla — 50 dosyayı tek hamlede işlemeden önce planı gör.
+
+---
+
+## Öğrendiklerin
+
+- @ sembolü dosya ve klasörleri referans almanın yolu
+- 5 temel desen: Çıkar / Sentezle / Şablon / Görsel / Web
+- Büyük veri setlerinde /plan ve /compact yardımcı olur
+
+**Devam etmek için:** "ders 2-2" yaz`
+},
+
+'lesson-2-2': {
+  title: 'Ders 2-2: Temel Komutlar',
+  module: 2, num: '2-2',
+  content: `Claude Code'da 62'den fazla komut var.
+
+Hepsini ezberlemene gerek yok. Ama 8 tanesini bilirsen, %90 işini halledersin.
+
+---
+
+WAIT: /help yaz ve çıkan listeye bir bak. Kaç komut görüyorsun?
+
+USER: [Sayıyı söyler]
+
+---
+
+Araba kullanmayı öğrenirken motorun kaç parçadan oluştuğunu öğrenmezsin. Direksiyonu, gazı, freni öğrenirsin.
+
+---
+
+## 8 Kritik Komut
+
+| Komut | Ne Yapar | Ne Zaman Kullanırsın |
+|-------|---------|---------------------|
+| /plan | Önce plan yap, sonra çalış | Karmaşık veya büyük görevlerde |
+| /context | Ne kadar "alan" kaldığını göster | Uzun oturumlarda yer kontrolü |
+| /compact | Oturumu sıkıştır, alan aç | Bağlam dolmaya başladığında |
+| /clear | Her şeyi sil, sıfırdan başla | Yeni bir konuya geçerken |
+| /init | CLAUDE.md dosyasını otomatik oluştur | Yeni proje başlatırken |
+| /model | Kullandığın AI modelini değiştir | Hız/kalite dengelemi gerektiğinde |
+| /rewind | Son işlemi geri al | Hata yaptığında |
+| /help | Tüm komutları listele | Bir komut aradığında |
+
+---
+
+WAIT: Bu 8 komuttan hangisi sana en mantıklı geldi? Hangisini bugün kullanırdın?
+
+USER: [Bir komut seçer]
+
+---
+
+## 3 Çalışma Modu
+
+| Mod | Nasıl Çalışır | Ne Zaman Kullan |
+|-----|--------------|----------------|
+| **Normal** (varsayılan) | Her önemli adımda senden onay ister | Dikkat gerektiren işler |
+| **Auto-Accept** | Onay beklemeden devam eder | Güvendiğin, tekrarlayan işler |
+| **Plan Modu** | Sadece planlar, hiçbir şeye dokunmaz | Karmaşık görevler öncesi |
+
+Geçiş:
+- Normal → Auto-Accept: Shift + Tab (bir kez)
+- Normal → Plan Modu: Shift + Tab (iki kez)
+- Geri dönmek: Esc
+
+---
+
+## Klavye Kısayolları
+
+### Oturum Yönetimi
+
+| Ortam | Başlatma | Kapatma |
+|-------|---------|---------|
+| **Terminal** | claude yaz | /exit veya Ctrl+C |
+| **VS Code eklentisi** | Panel zaten açık | Sohbet panelini kapat (X) |
+
+> **Önemli:** /exit ve Ctrl+C yalnızca terminal sürümünde çalışır. VS Code eklentisinde bu komutlar yoktur — sohbet penceresini X ile kapatırsın.
+
+### Mod Geçişleri
+
+| Kısayol | Ne Yapar |
+|---------|---------|
+| Shift + Tab (1 kez) | Normal → Auto-Accept moduna geç |
+| Shift + Tab (2 kez) | Normal → Plan Moduna geç |
+| Esc | İstediğin moda geri dön / Claude'u durdur |
+
+### Metin ve Gezinme
+
+| Kısayol | Ne Yapar |
+|---------|---------|
+| ↑ (yukarı ok) | Önceki komutu getir |
+| ↑↑↑ (birkaç kez) | Komut geçmişinde geri git |
+| Ctrl + R | Komut geçmişinde ara |
+| Ctrl + L | Terminal ekranını temizle (Claude kapanmaz) |
+| Ctrl + V | Ekran görüntüsü veya metin yapıştır |
+
+---
+
+## Paylaşmadan Önce: /security-review
+
+8 komutun ötesinde, bir tane daha — ama bu seni korumak için:
+
+~~~
+/security-review
+~~~
+
+Kodun içinde açıkta kalmış API anahtarı veya güvenlik açığı olup olmadığını tarar. Bulursa gösterir ve düzeltir.
+
+**Ne Zaman Kullanılır?**
+~~~
+Projeyi paylaşmadan önce       → /security-review
+GitHub'a yüklemeden önce       → /security-review
+İş arkadaşına göndermeden önce → /security-review
+~~~
+
+**Altın Kural:** API anahtarlarını hiçbir zaman doğrudan koda yazma. Bunun yerine: "Environment dosyası oluştur, API anahtarımı oraya koy."
+
+WAIT: /security-review komutunu aktif bir projende çalıştırdın mı? Ne buldu?
+
+USER: Temiz çıktı / Bir uyarı gördüm / Henüz denemedim
+
+---
+
+## Öğrendiklerin
+
+- 62 komut var ama 8 tanesi %90 işini görür
+- /security-review: paylaşmadan önce mutlaka çalıştır
+- 3 mod: Normal / Auto-Accept / Plan
+- /exit veya Ctrl+C yalnızca terminalde çalışır
+- Ayarlar yeni oturumda devreye girer
+
+**Devam etmek için:** "ders 2-3" yaz`
+},
+
+'lesson-2-3': {
+  title: 'Ders 2-3: CLAUDE.md — Projenin Hafızası',
+  module: 2, num: '2-3',
+  content: `Her yeni Claude Code oturumu boş bir kağıtla başlar.
+
+Adını bilmez. Ne üzerinde çalıştığını bilmez. Nasıl davranmasını istediğini bilmez.
+
+Her seferinde yeniden tanışmak zorunda mısın?
+
+Hayır. Bunun için CLAUDE.md var.
+
+---
+
+WAIT: Yeni işe giren birine her sabah aynı şeyleri anlatmak zorunda kalsaydın ne yapardın?
+
+USER: [Bir not, brifing belgesi, el kitabı gibi bir şey söyler]
+
+---
+
+Tam. CLAUDE.md de tam olarak bu.
+
+Her oturum başladığında Claude otomatik olarak CLAUDE.md dosyasını okur. Kimin olduğunu, ne üzerinde çalıştığını, nasıl davranması gerektiğini öğrenir.
+
+---
+
+## Anayasa Metaforu
+
+~~~
+CLAUDE.md  =  Anayasa
+               (kalıcı, en yüksek otorite)
+                      ↓
+Promptlar  =  Günlük kararlar
+               (anayasaya uymak zorunda)
+~~~
+
+Örnek: CLAUDE.md'ye "Türkçe cevap ver" yazdıysan, bir promptta "answer in English" desen bile — Claude Türkçe cevap verir.
+
+---
+
+## CLAUDE.md Hiyerarşisi
+
+~~~
+~/.claude/CLAUDE.md          ← Tüm projeler için geçerli
+     ↓
+proje_klasoru/CLAUDE.md      ← Bu proje için geçerli
+     ↓
+alt_klasor/CLAUDE.md         ← Bu alt klasör için (nadir)
+~~~
+
+---
+
+WAIT: Sana her gün yardım eden bir asistan olsaydı, ona ne bilmesini isterdin? 3 şey say.
+
+USER: [3 şey listeler]
+
+---
+
+## İlk CLAUDE.md'yi Oluştur
+
+~~~
+/init
+~~~
+
+Claude projeyi analiz eder ve otomatik bir CLAUDE.md taslağı oluşturur.
+
+---
+
+## İyi CLAUDE.md Nasıl Olur?
+
+**1. En önemli kurallar en üste**
+
+**2. Madde işareti + kısa başlık formatı**
+
+~~~
+## Genel Kurallar
+- Türkçe cevap ver
+- Her değişiklikten önce sor
+- Kısa ve net ol
+~~~
+
+**3. "Her zaman" ve "Asla" gibi net ifadeler kullan**
+
+~~~
+- Her zaman değişiklik yapmadan önce planı göster
+- Asla .env dosyasını düzenleme
+- Asla commit yapma, ben sorana kadar
+~~~
+
+---
+
+## Öğrendiklerin
+
+- Her oturum boş başlar — CLAUDE.md kalıcı hafıza sağlar
+- CLAUDE.md bir anayasadır — tüm promptların üzerindedir
+- /init ile otomatik oluşturulur, sonra özelleştirilir
+
+**Devam etmek için:** "modül 3" veya "ders 3-1" yaz`
+},
+
+'lesson-3-1': {
+  title: 'Ders 3-1: Skills — Claude\'a Öğretmek',
+  module: 3, num: '3-1',
+  content: `Her hafta aynı işi yapıyorsun. Toplantı notu alıyorsun. Claude'a veriyorsun. Aynı formatı açıklıyorsun. Tekrar tekrar.
+
+Ya Claude o formatı bir kez öğrense ve hep hatırlasa?
+
+Skills tam olarak bu.
+
+---
+
+WAIT: Her hafta veya her ay tekrar yaptığın, sıkıcı bulduğun bir iş var mı?
+
+USER: [Bir iş tanımlar]
+
+---
+
+## 3 Seviye
+
+| Seviye | Nasıl Çalışır | Sorun |
+|--------|--------------|-------|
+| **1 — Simple Chat** | Her seferinde açıklarsın | Tekrar tekrar aynı talimatı yazıyorsun |
+| **2 — Skill** | Bir kez tanımlarsın, hep hatırlar | Sadece /komut yazmak yeterli |
+| **3 — Plugin** | Skill + araçlar + otomasyon paketi | İleri seviye |
+
+---
+
+## Skill Nedir?
+
+Skill = Claude'a öğrettiğin, istediğinde çağırabileceğin özel talimat paketi.
+
+Bir .md (markdown) dosyası. Ama özel bir klasörde:
+
+~~~
+.claude/
+└── skills/
+    └── toplanti-notu/
+        └── SKILL.md
+~~~
+
+SKILL.md içinde şunlar olur:
+
+~~~
+# Toplantı Notu Özeti
+
+## Ne Yapar
+Toplantı notlarını alır, görev listesine dönüştürür.
+
+## Nasıl Çağrılır
+/toplanti-notu
+
+## Adımlar
+1. Notu oku
+2. Görevleri listele (kişi + tarih ile)
+3. Kararları listele
+4. Çıktıyı Türkçe, madde işareti formatında sun
+~~~
+
+---
+
+## Skill'i Çağırmak
+
+~~~
+/toplanti-notu
+~~~
+
+Claude skill dosyasını okur ve o talimatlara göre çalışır. Ardından notlarını yapıştır ya da @dosya.txt ile referans al.
+
+---
+
+## Sıfırdan Yazmak Zorunda Değilsin
+
+Her skill'i baştan yazmak gerekmez. Başkalarının hazırladığı skill'leri de ekleyebilirsin:
+
+~~~
+/ (slash) yaz → "manage plugins" seç → Skill URL'sini yapıştır → Ekle
+~~~
+
+Toplulukta hazır skill'ler var: video oluşturma, PDF işleme, web scraping, sunum hazırlama...
+
+WAIT: Hazır bir skill olsa, hangi iş için kullanmak isterdin?
+
+USER: [Bir iş tanımlar — bu onların ideal skill'inin ipucu]
+
+> **Kural:** Bir işi 3+ kez kendin tanımladıysan → kendin yaz. Başkası zaten yazdıysa → URL ile ekle. İkisi de aynı sonucu verir.
+
+---
+
+## Ne Zaman Skill Yazarsın?
+
+~~~
+Bir işi 3+ kez aynı şekilde yaptıysan → Skill zamanı
+~~~
+
+Örnekler:
+- Haftalık durum raporu
+- Müşteri maili şablonu
+- İçerik taslağı
+- Toplantı özeti
+
+---
+
+## Öğrendiklerin
+
+- Skills = Claude'a öğretilen kalıcı talimat paketleri
+- .claude/skills/ klasöründe SKILL.md olarak saklanır
+- /komut-adi ile çağrılır
+- Tekrar eden her iş için skill düşün
+
+**Devam etmek için:** "ders 3-2" yaz`
+},
+
+'lesson-3-2': {
+  title: 'Ders 3-2: Ajanlar — Paralel Çalışma',
+  module: 3, num: '3-2',
+  content: `50 müşteri mailini analiz etmen gerekiyor.
+
+Birer birer açar, birer birer okursun. 3 saat gider.
+
+Ya da tek bir komutla hepsini aynı anda analiz ettirirsin. 15 dakika.
+
+Ajanlar bu farkı yaratıyor.
+
+---
+
+WAIT: Şimdiye kadar Claude'a çok sayıda benzer dosyayı tek tek işlettin mi? Ne kadar sürdü?
+
+USER: [Deneyimini paylaşır]
+
+---
+
+## Ajan Nedir?
+
+Claude Code bir görevi sana verirken birden fazla "yardımcı" başlatabilir. Her yardımcı aynı anda farklı bir parçayı işler.
+
+~~~
+Sen          =  Restoran sahibi (ne istediğine karar veriyorsun)
+Claude       =  Şef aşçı (görevleri dağıtıyor, koordine ediyor)
+Ajanlar      =  Komi aşçılar (aynı anda farklı şeyler pişiriyor)
+Skills       =  Tarifler (her kominin masasında, hepsi kullanıyor)
+~~~
+
+---
+
+## Hız Karşılaştırması
+
+| Görev | Sıralı (birer birer) | Paralel (ajanlarla) |
+|-------|---------------------|---------------------|
+| 20 müşteri maili analiz | ~60 dakika | ~6 dakika |
+| 5 farklı konu araştır | ~50 dakika | ~5 dakika |
+| 30 dosyayı sınıflandır | ~90 dakika | ~10 dakika |
+
+---
+
+## Ajanları Ne Zaman Kullanırsın?
+
+| KULLAN | KULLANMA |
+|--------|---------|
+| Çok sayıda benzer dosya | Tek bir dosya |
+| Paralel araştırma | Sıralı işler (A bitmeden B başlayamaz) |
+| Toplu üretim | Hızlı biten basit görevler |
+
+---
+
+## Ajan Nasıl Başlatılır?
+
+Özel bir komut yok. Sadece paralel çalışmasını söyle:
+
+~~~
+@musteriler/ klasöründeki tüm .txt dosyalarını paralel olarak analiz et.
+Her birinden şikayetleri çıkar. Sonunda birleştir.
+~~~
+
+veya
+
+~~~
+Bu 5 konuyu aynı anda araştır:
+1. [konu 1]
+2. [konu 2]
+...
+Hepsini ayrı bölümler halinde raporla.
+~~~
+
+---
+
+## Alt Ajanlar — Danışman Ekibi
+
+İleri bir kullanım: her ajan farklı bir uzmanlık rolü ve **karakter** üstlenir.
+
+Örnek: Yeni bir ürün lansmanı için değerlendirme istiyorsun.
+
+~~~
+Sen: "Bu lansman planını 3 farklı gözden değerlendir"
+    ↓
+├── 📊 CFO (ಠ_ಠ)  — "Veriler ne diyor? ROI nerede?"
+├── 🎨 Tasarımcı (◠‿◠) — "Müşteri deneyimi nasıl? Bağ kuruldu mu?"
+└── 🧑 Müşteri (•‿•) — "Ben bu ürünü neden alırım? Bana ne hissettiriyor?"
+~~~
+
+Her ajan kendi dilinde yanıt verir. Ana ajan sentezler:
+
+> **CFO:** Engagement düşük. Ama ölçülebilir bir çözüm lazım.
+>
+> **Tasarımcı:** Kampanya ruhu yok. Duygusal bağlantı kurulmuyor.
+>
+> **Müşteri:** "Bu bana göre mi?" sorusunu soruyor ama cevap bulamıyor.
+>
+> **Sentez:** → Kişiselleştirilmiş deneyim ekle. Kullanıcı "bu benim için yapılmış" hissini bulsun.
+
+3 farklı bakış açısı → 1 net karar. Toplantı yok, saat kaybı yok.
+
+---
+
+## Dikkat: Ajanlar Token Harcar
+
+Her ajan ayrı bir Claude oturumudur. Paralel çalışmak = daha hızlı ama daha fazla API kullanımı.
+
+---
+
+## Öğrendiklerin
+
+- Ajanlar paralel çalışan yardımcı Claude oturumlarıdır
+- Toplu işlerde 10 kat hız kazandırır
+- Özel komut yok — "paralel çalış" demek yeterli
+
+**Devam etmek için:** "ders 3-3" yaz`
+},
+
+'lesson-3-3': {
+  title: 'Ders 3-3: Plan Modu — Önce Düşün',
+  module: 3, num: '3-3',
+  content: `Büyük bir işi doğrudan başlatmak cazip gelir.
+
+Ama Claude'un planlamadan başlaması bazen şaşırttığı şeyler yapmasına yol açar. Dosyaları yanlış yere koyar. Yanlış formatta çıktı üretir. Sonra geri almak gerekir.
+
+Plan Modu bunu önler.
+
+---
+
+WAIT: Büyük bir projeye başlamadan önce plan yapar mısın? Neden yapar ya da yapmaz mısın?
+
+USER: [Alışkanlığını paylaşır]
+
+---
+
+## Plan Modu Ne Yapar?
+
+Plan Modunda Claude:
+- Dosyaları **okur** ama **dokunmaz**
+- Bir plan üretir
+- Sen planı onaylarsın
+- Sonra çalışır
+
+~~~
+Normal Mod:   Söyle → Hemen Yap
+Plan Modu:    Söyle → Planla → Sen Onayla → Yap
+~~~
+
+---
+
+## Neden Önemli?
+
+**Senaryo A — Plan Modu olmadan:**
+~~~
+> 200 dosyalı bu klasörü yeniden organize et
+Claude: [Hemen başlar. 30 dakika sonra...]
+Claude: Tamamlandı.
+Sen: Ama ben bu formatta istemiyordum...
+~~~
+
+**Senaryo B — Plan Modu ile:**
+~~~
+> 200 dosyalı bu klasörü yeniden organize et
+Claude: "Plan: 5 ana klasör oluşturacağım..."
+Sen: Mükemmel / Dur, şunu değiştir
+Claude: Onaylandı. Başlıyorum.
+~~~
+
+Planlama için harcanan 5 dakika, yeniden yapmak için harcanan 50 dakikayı önler.
+
+---
+
+## Plan Moduna Nasıl Girilir?
+
+~~~
+Shift + Tab  →  Plan Moduna geç
+Esc          →  Geri dön
+~~~
+
+Veya komutla:
+
+~~~
+/plan
+~~~
+
+---
+
+## Plan Modu İçin En İyi Durumlar
+
+~~~
+✅ Birçok dosyayı etkileyen işler
+✅ Geri alması zor değişiklikler
+✅ Yeni bir işi ilk kez yapıyorsan
+✅ Büyük klasör organizasyonları
+
+❌ Basit, tek dosya işlemleri
+❌ Hızlı test ve deneme
+~~~
+
+---
+
+## Öğrendiklerin
+
+- Plan Modu: okur ama dokunmaz — planı onayladıktan sonra çalışır
+- Shift + Tab veya /plan ile girilir
+- Büyük ve geri dönülmesi zor işler için ideal
+
+**Devam etmek için:** "modül 4" veya "ders 4-1" yaz`
+},
+
+'lesson-4-1': {
+  title: 'Ders 4-1: Sistem Düşüncesi',
+  module: 4, num: '4-1',
+  content: `İki kişi aynı Claude Code sürümünü kullanıyor.
+
+Biri 2 katı verimli çalışıyor. Diğeri 10 katı.
+
+Fark modelde değil. Fark kurduğu sistemde.
+
+---
+
+WAIT: Bir şirkette fark yaratan şey iyi çalışanlar mı, iyi sistemler mi? Ne düşünüyorsun?
+
+USER: [Görüşünü paylaşır]
+
+---
+
+## Bilgisayar Analojisi
+
+| Bilgisayar | Claude Code | Ne Yapar |
+|-----------|-------------|---------|
+| CPU | Claude modeli | Düşünme ve işleme gücü |
+| RAM | Bağlam penceresi | Aynı anda tutabildiği bilgi |
+| Sabit Disk | Dosya sistemi | Kalıcı depolama |
+| **İşletim Sistemi** | **Agent Harness** | **Her şeyi bir arada tutar** |
+| Uygulamalar | Skills | Özel görevler için araçlar |
+
+**İşletim sistemi olmadan CPU hızlı olsa da kullanılamazdı.**
+
+---
+
+## Agent Harness Nedir?
+
+Agent Harness = Claude Code'un etrafındaki çerçeve.
+
+~~~
+┌─────────────────────────────────────┐
+│           AGENT HARNESS             │
+│                                     │
+│  ┌──────────┐    ┌───────────────┐  │
+│  │  Araçlar │    │  Güvenlik     │  │
+│  └──────────┘    └───────────────┘  │
+│                                     │
+│  ┌──────────┐    ┌───────────────┐  │
+│  │  Hafıza  │    │  Bağlantılar  │  │
+│  └──────────┘    └───────────────┘  │
+│                                     │
+│  ┌──────────────────────────────┐   │
+│  │      Skills Kütüphanesi      │   │
+│  └──────────────────────────────┘   │
+└─────────────────────────────────────┘
+~~~
+
+Sen bu çerçeveyi tasarlıyorsun.
+
+---
+
+## Sistem Tasarımının 3 Sorusu
+
+**1. Erişim:** Claude hangi sistemlere, dosyalara, bağlantılara erişebilmeli?
+
+**2. Onay:** Hangi işlemler otomatik, hangilerinde sen onay veriyorsun?
+
+**3. Takip:** Kararlar ve değişiklikler nasıl kaydediliyor?
+
+---
+
+WAIT: Bu 3 soruyu kendi iş alanın için düşün. Cevapların ne olurdu?
+
+USER: [3 soruya cevap verir]
+
+---
+
+## "Model Değil, Sistem Fark Yaratır"
+
+Yeni bir Claude modeli çıktığında herkes heyecanlanır. "Daha akıllı!" denir.
+
+Ama iyi sistem kurmuş biri eski modelle, kötü sistem kurmuş birinin yeni modelden daha iyi sonuç aldığı çok görüldü.
+
+Sistem bir kez kurulur. Model zaten güncellenir.
+
+---
+
+## Öğrendiklerin
+
+- Agent Harness = Claude Code'u çevreleyen sistem tasarımı
+- Araçlar + Güvenlik + Hafıza + Bağlantılar + Skills
+- 3 soru: Erişim / Onay / Takip
+- Model değil, sistem fark yaratır
+
+**Devam etmek için:** "ders 4-2" yaz`
+},
+
+'lesson-4-2': {
+  title: 'Ders 4-2: Kendi İş Akışını Tasarla',
+  module: 4, num: '4-2',
+  content: `Bu derste bir şey üreteceksin.
+
+Sadece okumak değil — kendi sistemini kurmak.
+
+---
+
+WAIT: Şu an düzenli tekrar eden 3 işini yaz. (Haftalık rapor? Müşteri özeti? İçerik taslağı?)
+
+USER: [3 iş listeler]
+
+---
+
+## İkinci Beyin Klasörü
+
+~~~
+ikinci-beynim/
+│
+├── CLAUDE.md              ← "Ben kimim, nasıl çalışıyoruz"
+│
+├── 00_Inbox/              ← Hızlı yakalama
+│   "Şimdi düşündüm, sonra işleyeceğim"
+│
+├── 01_Projeler/           ← Aktif işler
+│
+├── 02_Alanlar/            ← Süregelen konular
+│   İş, sağlık, öğrenme, finans...
+│
+├── 03_Kaynaklar/          ← Referans materyaller
+│
+└── 04_Arsiv/              ← Tamamlanan işler
+~~~
+
+Bu yapı **PARA sistemi** olarak bilinir (Projects / Areas / Resources / Archive).
+
+Claude bu yapıyı bildiğinde "yeni not al" dediğinde nereye koyacağını bilir.
+
+---
+
+WAIT: Bu 5 klasörü kendi iş hayatınla eşleştir. Her birine bir örnek yaz.
+
+USER: [Her klasör için bir örnek verir]
+
+---
+
+## Çalışma Ritmi
+
+~~~
+Sabah      → Claude Code'u aç, CLAUDE.md otomatik yüklenir
+               "Bugün ne var?" sorusunu sor
+
+Gün içinde → Görevleri delege et, sonuçları gözden geçir
+               Yeni skills ekle, eskilerini güncelle
+
+Hafta sonu → Tamamlanan işleri 04_Arsiv'e taşı
+               CLAUDE.md'yi güncelle
+               Yeni skill fırsatlarını belirle
+~~~
+
+---
+
+## Sistemin Büyüdükçe
+
+~~~
+.claude/skills/
+├── haftalik-rapor/
+├── musteri-ozeti/
+├── icerik-taslagi/
+├── toplanti-notu/
+└── ... (her ay birkaç yeni skill)
+~~~
+
+Her skill = tekrar eden bir işten kurtulmak.
+
+3 ayda 15-20 skill kütüphanesi olduğunda geriye döner bakarsın ve "bunu nasıl yaşıyordum?" diye soracaksın.
+
+---
+
+## Öğrendiklerin
+
+- İkinci Beyin yapısı: Inbox / Projeler / Alanlar / Kaynaklar / Arşiv
+- Skill kütüphanesi tekrar eden her işten kurtarır
+- Çalışma ritmi: sabah rutini + gün içi delegasyon + haftalık bakım
+
+**Devam etmek için:** "ders 4-3" yaz`
+},
+
+'lesson-4-3': {
+  title: 'Ders 4-3: Sonraki Adımlar',
+  module: 4, num: '4-3',
+  content: `Bu kursun başında Claude Code hakkında ne biliyordun?
+
+---
+
+WAIT: Bu kursu almadan önceki kendinle şimdiki kendin arasında ne değişti? En büyük fark neydi?
+
+USER: [Dürüst bir değerlendirme yapar]
+
+---
+
+## Ne Öğrendin?
+
+| Modül | Kazanım |
+|-------|---------|
+| **0** | ChatGPT "anlatır", Claude Code "yapar" — farkı gördün |
+| **1** | Kurulum, terminal, ilk delegasyon — elimle yaptın |
+| **2** | @ sembolü, 8 komut, CLAUDE.md — gerçek dosyalarda çalıştın |
+| **3** | Skills, ajanlar, Plan Modu — tekrar eden işleri otomatikleştirdin |
+| **4** | Sistem tasarımı, ikinci beyin, kendi skill kütüphanenini başlattın |
+
+Bu Bloom Taksonomisinin tüm basamakları:
+
+~~~
+Hatırla → Anla → Uygula → Analiz et → Değerlendir → Yarat
+~~~
+
+Sen artık sadece kullanıcı değilsin. Sistem tasarımcısısın.
+
+---
+
+## Bundan Sonra Öğrenebileceklerin
+
+| Konu | Ne Yapar | Zorluk |
+|------|---------|--------|
+| **MCP Sunucuları** | Google Drive, Notion, Slack, GitHub'a bağla | Orta |
+| **Tarayıcı Otomasyonu** | Claude web sitelerinde gezinsin, form doldursun | Orta |
+| **Custom Sub-Agents** | Farklı uzmanlıkta danışman ajanları kur | İleri |
+| **Hooks** | Her işlem sonrası otomatik kalite kontrolü | İleri |
+
+---
+
+## Topluluk ve Kaynaklar
+
+| Kaynak | Ne İçin |
+|--------|---------|
+| **ccforeveryone.com** | Kapsamlı Claude Code rehberi (İngilizce) |
+| **[claude.ai/docs](https://claude.ai/docs)** | Resmi Anthropic dökümantasyonu |
+| **[X (Twitter)](https://x.com/search?q=%23ClaudeCode)** | #ClaudeCode — gerçek kullanım örnekleri |
+
+---
+
+## WAT Framework: Sistemi Anlamak İçin 3 Kavram
+
+Uzmanlar Claude Code'u anlatırken üç İngilizce kelime kullanır: **W**orkflow, **A**gent, **T**ool.
+
+| Kavram | Türkçe | Ne Demek |
+|--------|--------|---------|
+| **Workflow** | İş Akışı | Baştan sona otomatik çalışan süreç |
+| **Agent** | Ajan | Bağımsız karar veren, görevi yürüten yardımcı |
+| **Tool** | Araç | Claude'un bağlandığı dış sistem (Gmail, Apify, Drive…) |
+
+Bunlar birleşince ne olur?
+~~~
+"Gmail'den gelen şikayetleri oku (Tool)
+ → Her biri için çözüm öner (Agent)
+ → Hepsini tek raporda topla (Workflow)"
+~~~
+
+Bu üç kavramı bilmek, Claude Code topluluğunu, dökümanları ve ileri kaynakları anlamayı kolaylaştırır.
+
+---
+
+## Büyük Projeye Doğru Başlamak: .md Metodolojisi
+
+Claude Code'a doğrudan "şunu yap" demek işe yarar. Ama büyük projelerde daha güvenilir bir yöntem var:
+
+**Adım 1 — Claude.ai'da planla:**
+~~~
+claude.ai'ı aç → Projeyi tarif et →
+"Bunu Claude Code'a verebileceğim bir .md dosyası hazırla" de
+~~~
+
+**Adım 2 — .md dosyasını indir, klasöre at**
+
+**Adım 3 — Claude Code'a ver:**
+~~~
+Bu proje dosyasını oku ve başlayalım
+~~~
+
+Farkı nedir? Claude Code işi başlatmadan önce hedefi, araçları ve dosya yapısını biliyor. Rastgele karar vermiyor — planı takip ediyor.
+
+> Bu, bir şefe önceden menüyü hazırlatmak gibi. Mutfağa girdiğinde ne pişireceğini biliyor.
+
+WAIT: Şu an üzerinde çalıştığın bir proje var mı? O projeyi bu metodoloji ile başlatmak ister misin?
+
+USER: [Evet ve hangi proje olduğunu söyler / Hayır henüz yok]
+
+---
+
+## Canlıya Alma: Sistemini Buluta Taşı
+
+Kurduğun sistemin sürekli çalışmasını istiyorsan — bilgisayarın kapalıyken bile:
+
+| Platform | Ne İçin | Zorluk |
+|----------|---------|--------|
+| **Modal.com** | Python tabanlı otomasyonlar, zamanlı görevler | Orta |
+| **Vercel** | Web uygulamaları | Kolay |
+| **n8n Cloud** | Workflow otomasyonları | Kolay |
+| **GitHub Actions** | Kod tabanlı periyodik görevler | Orta |
+
+Modal.com örneği: "Projeyi Modal üzerinde kur ve her gün saat 9'da çalışsın" → Claude kurulumu yapar, sistemi buluta taşır.
+
+---
+
+## Son Söz
+
+Yapay zeka dünyasında iki grup var.
+
+Birinci grup AI'a sorar. İkinci grup AI'a **yaptırır.**
+
+Sen bu kursa başladığında terminale ilk kez baktın — ve korkmadın.
+
+Şimdi dosyaları organize ediyorsun, skills yazıyorsun, ajanları paralel çalıştırıyorsun, kendi sistemini tasarlıyorsun.
+
+Bu kursu tamamlayanların büyük çoğunluğu şunu söylüyor: *"Birkaç haftada en az 5-10 saatlik işimi Claude'a devreddim."*
+
+Sen artık o grubun içindesin.
+
+Fark skills'te değil, sistemde değil, modelde değil.
+
+Fark bakış açısında.
+
+**"Bu işi nasıl yapayım?" yerine "Bu işi nasıl devredeyim?" diye sormaya başladığında — geçttin.**
+
+---
+
+> Bu kursu **Mustafa Aydın** hazırladı.
+> Sorularını, geri bildirimlerini ve deneyimlerini paylaşmaktan çekinme.
+> [YouTube](https://www.youtube.com/@mustafa1aydin) · [LinkedIn](https://www.linkedin.com/in/mustafaaydin1/) · mustafaaydin@lab-mind.com
+
+---
+
+WAIT: Bu kurstan öğrendiklerini bu hafta gerçekten kullanacak mısın? Neyle başlayacaksın?
+
+USER: [Bir taahhüt verir]
+
+---
+
+**Tebrikler.**
+
+Cheat sheet'i yanında tut. Komutları unutursan ona bak.
+
+Her yeni skill yazdığında, her otomasyonu kurduğunda, kursa geri dön — farklı göreceksin.
+
+**Kurs tamamlandı.**`
+}
+};
+
+/* ══════════════════════════════════════════
+   LESSON ORDER (for prev/next)
+══════════════════════════════════════════ */
+const LESSON_ORDER = [
+  'lesson-0-0','lesson-0-1','lesson-0-2',
+  'lesson-1-1','lesson-1-2','lesson-1-3','lesson-1-4',
+  'lesson-2-1','lesson-2-2','lesson-2-3',
+  'lesson-3-1','lesson-3-2','lesson-3-3',
+  'lesson-4-1','lesson-4-2','lesson-4-3'
+];
+
+const MODULE_INFO = [
+  {num:0, label:'M0', title:'Neden?', desc:'ChatGPT ile farkı anla, büyük resmi gör.', lessons:['lesson-0-0','lesson-0-1','lesson-0-2'], lessonNames:['Hoş Geldin','Neden Claude Code?','Büyük Resim']},
+  {num:1, label:'M1', title:'İlk Temas', desc:'Kurulum, indir, ilk komut — gerçekten başla.', lessons:['lesson-1-1','lesson-1-2','lesson-1-3','lesson-1-4'], lessonNames:['Kurulum','İndir ve Başla','İlk Oturum','Görsel Çalışma Alanı']},
+  {num:2, label:'M2', title:'Temel Beceriler', desc:'@ sembolü, 8 komut, CLAUDE.md — günlük iş akışı.', lessons:['lesson-2-1','lesson-2-2','lesson-2-3'], lessonNames:['Dosyalarla Çalışmak','Temel Komutlar','CLAUDE.md — Hafıza']},
+  {num:3, label:'M3', title:'Güç Özellikleri', desc:'Skills, ajanlar, Plan Modu — 10x hız.', lessons:['lesson-3-1','lesson-3-2','lesson-3-3'], lessonNames:['Skills','Ajanlar','Plan Modu']},
+  {num:4, label:'M4', title:'Kendi Sistemin', desc:'Agent Harness, İkinci Beyin, skill kütüphanesi.', lessons:['lesson-4-1','lesson-4-2','lesson-4-3'], lessonNames:['Sistem Düşüncesi','Kendi İş Akışın','Sonraki Adımlar']}
+];
+
+/* ══════════════════════════════════════════
+   MARKDOWN PARSER
+══════════════════════════════════════════ */
+function escHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
+
+function parseInline(s){
+  if(!s) return '';
+  s = escHtml(s);
+  s = s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+  s = s.replace(/\*([^*]+)\*/g,'<em>$1</em>');
+  s = s.replace(/`([^`]+)`/g,'<code>$1</code>');
+  s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g,'<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+  return s;
+}
+
+function parseMarkdown(md){
+  const lines = md.split('\n');
+  const out = [];
+  let i = 0;
+  while(i < lines.length){
+    const line = lines[i];
+
+    // Fenced code block (using ~~~ as delimiter)
+    if(line.startsWith('~~~')){
+      let code = '';
+      i++;
+      while(i < lines.length && !lines[i].startsWith('~~~')){
+        code += lines[i] + '\n';
+        i++;
+      }
+      i++;
+      out.push('<div class="code-wrap"><pre><code>' + escHtml(code.trimEnd()) + '</code></pre><button class="copy-btn" onclick="copyCode(this)">⎘ Kopyala</button></div>');
+      continue;
+    }
+
+    // DOWNLOAD: label
+    if(line.startsWith('DOWNLOAD:')){
+      const label = line.slice(9).trim() || 'claude-code-rehberi.zip dosyasını indir';
+      out.push(`<div class="lesson-download-wrap"><div class="onboarding-download-btn" onclick="downloadAll(this)"><span>📦</span> ${escHtml(label)}</div></div>`);
+      i++; continue;
+    }
+
+    // VIDEO: src | poster | title
+    if(line.startsWith('VIDEO:')){
+      const parts = line.slice(6).split('|').map(s=>s.trim());
+      const src = parts[0] || '';
+      const title = parts[1] || 'Ders Videosu';
+      // YouTube embed
+      const ytMatch = src.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+      if(ytMatch){
+        const ytId = ytMatch[1];
+        out.push(`<div class="lesson-video-label">${escHtml(title)}</div><div class="lesson-video-wrap"><iframe src="https://www.youtube.com/embed/${ytId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="width:100%;aspect-ratio:16/9;border-radius:12px"></iframe></div>`);
+      } else {
+        const poster = parts[1] || '';
+        out.push(`<div class="lesson-video-label">${escHtml(title)}</div><div class="lesson-video-wrap"><video controls preload="metadata"${poster ? ' poster="'+escHtml(poster)+'"' : ''} src="${escHtml(src)}"></video></div>`);
+      }
+      i++; continue;
+    }
+
+    // WAIT / ACTION / USER
+    const step = line.match(/^(WAIT|ACTION|USER):\s*(.*)/);
+    if(step){
+      const type = step[1].toLowerCase();
+      const labelMap = { WAIT: 'DÜŞÜN', ACTION: 'İZLE', USER: 'CEVAPLA' };
+      const label = labelMap[step[1]] || step[1];
+      out.push(`<div class="step step-${type}"><span class="step-tag">${label}</span><span class="step-text">${parseInline(step[2])}</span></div>`);
+      i++; continue;
+    }
+
+    // HR
+    if(line.trim() === '---'){ out.push('<hr>'); i++; continue; }
+
+    // Headers
+    if(line.startsWith('### ')){ out.push(`<h3>${parseInline(line.slice(4))}</h3>`); i++; continue; }
+    if(line.startsWith('## ')){ out.push(`<h2>${parseInline(line.slice(3))}</h2>`); i++; continue; }
+    if(line.startsWith('# ')){ out.push(`<h1>${parseInline(line.slice(2))}</h1>`); i++; continue; }
+
+    // Blockquote (group consecutive)
+    if(line.startsWith('> ') || line === '>'){
+      let bq = '';
+      while(i < lines.length && (lines[i].startsWith('> ') || lines[i] === '>')){
+        bq += (lines[i].startsWith('> ') ? parseInline(lines[i].slice(2)) : '') + ' ';
+        i++;
+      }
+      out.push(`<blockquote><p>${bq.trim()}</p></blockquote>`);
+      continue;
+    }
+
+    // Table
+    if(line.startsWith('|')){
+      const rows = [];
+      let headerRow = null;
+      while(i < lines.length && lines[i].startsWith('|')){
+        const cells = lines[i].split('|').slice(1,-1).map(c=>c.trim());
+        if(cells.every(c=>/^[-:| ]+$/.test(c))){
+          headerRow = rows.pop();
+        } else {
+          rows.push(cells);
+        }
+        i++;
+      }
+      let t = '<table>';
+      if(headerRow){ t += '<thead><tr>' + headerRow.map(c=>`<th>${parseInline(c)}</th>`).join('') + '</tr></thead>'; }
+      t += '<tbody>' + rows.map(r=>'<tr>'+r.map(c=>`<td>${parseInline(c)}</td>`).join('')+'</tr>').join('') + '</tbody></table>';
+      out.push(t);
+      continue;
+    }
+
+    // Unordered list
+    if(line.startsWith('- ') || line.startsWith('* ')){
+      const items = [];
+      while(i < lines.length && (lines[i].startsWith('- ') || lines[i].startsWith('* '))){
+        items.push(parseInline(lines[i].slice(2)));
+        i++;
+      }
+      out.push('<ul>' + items.map(x=>`<li>${x}</li>`).join('') + '</ul>');
+      continue;
+    }
+
+    // Empty line
+    if(line.trim() === ''){ i++; continue; }
+
+    // Paragraph
+    out.push(`<p>${parseInline(line)}</p>`);
+    i++;
+  }
+  return out.join('\n');
+}
+
+/* ══════════════════════════════════════════
+   HOMEPAGE
+══════════════════════════════════════════ */
+function renderHome(){
+  const modulCards = MODULE_INFO.map(m=>`
+    <div class="module-card" onclick="navigate('${m.lessons[0]}')">
+      <div class="module-num">${m.label}</div>
+      <div class="module-info">
+        <div class="module-title">${m.title}</div>
+        <div class="module-desc">${m.desc}</div>
+        <div class="module-lessons-list">
+          ${m.lessons.map((id,j)=>`<span class="module-lesson-pill" onclick="event.stopPropagation();navigate('${id}')">${m.num}-${j===0?'0':j} ${m.lessonNames[j]}</span>`).join('')}
+        </div>
+      </div>
+    </div>`).join('');
+
+  return `
+<div class="home-hero" id="home-hero">
+  <div class="hero-eyebrow">Türkçe • Ücretsiz • Kod Yazmadan</div>
+  <h1 class="hero-title"><span>CLAUDE CODE</span><br>REHBERİ</h1>
+  <p class="hero-hook">Claude Code'yi Claude Code'den öğrenmek ister misiniz? İzleyerek veya okuyarak değil, birlikte yaparak öğrenmek kulağa nasıl geliyor?</p>
+  <p class="hero-sub">Ders materyallerini indir. Claude Code ile aç. Claude sana eğitmen gibi davranır — soru sorar, bekler, adım adım ilerler.</p>
+  <div class="hero-badges">
+    <span class="badge accent">⚡ 15 Ders</span>
+    <span class="badge accent">📦 5 Modül</span>
+    <span class="badge green">✓ Ücretsiz</span>
+    <span class="badge">~3 saat</span>
+  </div>
+</div>
+
+<div class="hero-image-wrap">
+  <img src="../Claudecode herkes için.png" alt="Claude Code Rehberi" class="hero-image">
+</div>
+
+<div class="home-section" id="howstart">
+  <h2 class="home-section-title">Nasıl Başlanır?</h2>
+  <p style="color:var(--text-2);margin-bottom:24px;font-size:14px">Claude Code kurulu olmalı. Henüz kurmadıysan <a href="#lesson-1-1" onclick="navigate('lesson-1-1')">Kurulum Rehberi</a>'ne bak.</p>
+
+  <div class="onboarding-steps">
+    <div class="onboarding-step">
+      <div class="onboarding-num">1</div>
+      <div class="onboarding-body">
+        <div class="onboarding-title">Ders materyallerini indir</div>
+        <div class="onboarding-desc">Aşağıdaki butona tıkla — ZIP dosyası bilgisayarına inecek.</div>
+        <div class="onboarding-action">
+          <div class="onboarding-download-btn" onclick="downloadAll(this)">
+            <span>📦</span> claude-code-rehberi.zip dosyasını indir
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="onboarding-step">
+      <div class="onboarding-num">2</div>
+      <div class="onboarding-body">
+        <div class="onboarding-title">ZIP dosyasını çıkart</div>
+        <div class="onboarding-desc">ZIP'i <strong>Belgeler</strong> klasörüne çıkart. İçinde <code>claude-code-rehberi</code> adında bir klasör oluşacak.</div>
+      </div>
+    </div>
+
+    <div class="onboarding-step">
+      <div class="onboarding-num">3</div>
+      <div class="onboarding-body">
+        <div class="onboarding-title">Klasörde terminal aç</div>
+        <div class="onboarding-desc">İşletim sistemini seç:</div>
+        <div class="os-tabs">
+          <button class="os-tab active" onclick="switchOS(this,'step3','mac')">🍎 Mac</button>
+          <button class="os-tab" onclick="switchOS(this,'step3','win')">🪟 Windows</button>
+        </div>
+        <div id="step3-mac" class="os-content active">
+          <div class="onboarding-options">
+            <div class="onboarding-option">
+              <div class="onboarding-option-label">Dosya gezgininden</div>
+              <div class="onboarding-option-text"><code>claude-code-rehberi</code> klasörüne sağ tıkla → <strong>"Yeni Terminal'de Aç"</strong> seç</div>
+            </div>
+            <div class="onboarding-option">
+              <div class="onboarding-option-label">Terminalden</div>
+              <div class="code-wrap">
+                <pre class="onboarding-code">cd ~/Documents/claude-code-rehberi</pre>
+                <button class="copy-btn" onclick="copyCode(this)">⎘ Kopyala</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="step3-win" class="os-content">
+          <div class="onboarding-options">
+            <div class="onboarding-option">
+              <div class="onboarding-option-label">Dosya gezgininden</div>
+              <div class="onboarding-option-text"><code>claude-code-rehberi</code> klasörünü aç → adres çubuğuna tıkla → <code>wt</code> yaz → Enter → terminalde <code>wsl</code> yaz</div>
+            </div>
+            <div class="onboarding-option">
+              <div class="onboarding-option-label">PowerShell / Terminalden</div>
+              <div class="code-wrap">
+                <pre class="onboarding-code">cd %USERPROFILE%\Documents\claude-code-rehberi</pre>
+                <button class="copy-btn" onclick="copyCode(this)">⎘ Kopyala</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="onboarding-step">
+      <div class="onboarding-num">4</div>
+      <div class="onboarding-body">
+        <div class="onboarding-title">Claude Code'u <strong>ders klasöründen</strong> başlat</div>
+        <div class="onboarding-desc">İşletim sistemini seç:</div>
+        <div class="os-tabs">
+          <button class="os-tab active" onclick="switchOS(this,'step4','mac')">🍎 Mac</button>
+          <button class="os-tab" onclick="switchOS(this,'step4','win')">🪟 Windows</button>
+        </div>
+        <div id="step4-mac" class="os-content active">
+          <div class="code-wrap">
+            <pre class="onboarding-code">cd ~/Documents/claude-code-rehberi
+claude</pre>
+            <button class="copy-btn" onclick="copyCode(this)">⎘ Kopyala</button>
+          </div>
+        </div>
+        <div id="step4-win" class="os-content">
+          <div class="onboarding-desc" style="margin-bottom:6px">PowerShell'de:</div>
+          <div class="code-wrap">
+            <pre class="onboarding-code">wsl
+cd ~/Documents/claude-code-rehberi
+claude</pre>
+            <button class="copy-btn" onclick="copyCode(this)">⎘ Kopyala</button>
+          </div>
+        </div>
+        <div class="onboarding-note">⚠️ Önemli: Claude, yalnızca başlatıldığı klasördeki dosyaları ve komutları görebilir. <strong>Her zaman <code>claude-code-rehberi</code> klasörünün içindeyken başlat.</strong> Farklı bir klasörden açarsan <code>/baslat-0-0</code> gibi komutlar çalışmaz.</div>
+      </div>
+    </div>
+
+    <div class="onboarding-step">
+      <div class="onboarding-num">5</div>
+      <div class="onboarding-body">
+        <div class="onboarding-title">İlk derse başla</div>
+        <div class="onboarding-desc">Claude açıldığında şunu yaz ve Enter'a bas:</div>
+        <div class="code-wrap">
+          <pre class="onboarding-code">/baslat-0-0</pre>
+          <button class="copy-btn" onclick="copyCode(this)">⎘ Kopyala</button>
+        </div>
+        <div class="onboarding-desc" style="margin-top:10px">Claude dersi okur, eğitmen moduna girer ve seni karşılar. 🎉</div>
+        <div class="onboarding-options" style="margin-top:12px">
+          <div class="onboarding-option">
+            <div class="onboarding-option-label">Kaldığın yerden devam etmek için</div>
+            <div class="onboarding-option-text"><code>/devam</code> yaz — Claude nerede kaldığını hatırlar</div>
+          </div>
+          <div class="onboarding-option">
+            <div class="onboarding-option-label">Belirli bir derse atlamak için</div>
+            <div class="onboarding-option-text"><code>/baslat-1-1</code>, <code>/baslat-2-3</code> gibi — her ders için aynı format</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="home-section" id="features">
+  <h2 class="home-section-title">Bu Kurs Nasıl Çalışır?</h2>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <div class="feature-icon">🤖</div>
+      <div class="feature-title">Claude Eğitmen Gibi Davranır</div>
+      <div class="feature-desc">Ders materyallerini Claude okur. Soru sorar, cevabını bekler, adım adım ilerler. Sen sadece konuşursun.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">⚡</div>
+      <div class="feature-title">Yaparak Öğren</div>
+      <div class="feature-desc">Her ders gerçek bir iş yapar. Claude bekler, seni zorlamaz — kendi hızında gidersin.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🇹🇷</div>
+      <div class="feature-title">Tamamen Türkçe</div>
+      <div class="feature-desc">Teknik terimler sadeleştirilmiş. Jargon kullanılırken hep yanında açıklama var.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🎯</div>
+      <div class="feature-title">Kod Yazmak Gerekmez</div>
+      <div class="feature-desc">Terminal görmemiş olsan da başlayabilirsin. Kurulum dahil her adım ders içinde anlatılır.</div>
+    </div>
+  </div>
+</div>
+
+<div class="home-section" id="modules">
+  <h2 class="home-section-title">5 Modül, 14 Ders</h2>
+  <p style="color:var(--text-2);margin-bottom:16px;font-size:14px">İçerikleri önizlemek için bir derse tıkla. Gerçek öğrenme Claude Code'da başlıyor.</p>
+  <div class="module-list">${modulCards}</div>
+</div>
+
+<div class="home-section" id="faq">
+  <h2 class="home-section-title">Sık Sorulan Sorular</h2>
+  <div class="faq-list">
+    <div class="faq-item">
+      <div class="faq-q">Duraklatıp sonra devam edebilir miyim?</div>
+      <div class="faq-a">Evet. Claude, her dersin sonunda ilerlemeyi <code>ILERLEME.md</code> dosyasına yazar. Bir sonraki oturumda <code>START-HERE.md dosyasını oku</code> yazman yeterli — Claude kaldığın yeri bulur ve sorar.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">ZIP'i farklı bir konuma çıkartabilir miyim?</div>
+      <div class="faq-a">Evet. Sadece terminali o klasörden açmayı unutma. <code>cd ~/[klasör-yolu]/claude-code-rehberi</code> komutuyla gidebilirsin.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Claude Code kurulu değil, ne yapmalıyım?</div>
+      <div class="faq-a">Önce <a href="#lesson-1-1" onclick="navigate('lesson-1-1')">Kurulum Rehberi</a>'ne bak. Terminal ve Claude Code kurulumunu adım adım anlatıyor.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Belirli bir dersten başlayabilir miyim?</div>
+      <div class="faq-a">Evet. Claude açıkken <code>ders 2-3'ten başla</code> gibi yazman yeterli. Claude doğrudan o derse atlar.</div>
+    </div>
+  </div>
+</div>
+
+<div class="bottom-cta">
+  <p class="bottom-cta-label">Hazır mısın?</p>
+  <div class="onboarding-download-btn" onclick="downloadAll(this)" style="display:inline-flex;font-size:16px;padding:14px 32px;margin-bottom:32px">
+    <span>📦</span> claude-code-rehberi.zip dosyasını indir
+  </div>
+  <div class="next-steps-box">
+    <div class="next-steps-title">İndirdikten sonra ne yapacaksın?</div>
+    <div class="next-steps-row">
+      <div class="next-step-item">
+        <div class="next-step-num">1</div>
+        <div class="next-step-text">ZIP'i <strong>Belgeler</strong> klasörüne çıkart</div>
+      </div>
+      <div class="next-step-arrow">→</div>
+      <div class="next-step-item">
+        <div class="next-step-num">2</div>
+        <div class="next-step-text">Klasörde terminal aç → <code>claude</code> yaz</div>
+      </div>
+      <div class="next-step-arrow">→</div>
+      <div class="next-step-item">
+        <div class="next-step-num">3</div>
+        <div class="next-step-text"><code>START-HERE.md dosyasını oku</code> yaz — Claude başlatır</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="display:flex;justify-content:flex-end;margin-top:24px">
+  <button class="lesson-nav-btn next" style="max-width:280px" onclick="navigate('lesson-0-0')">
+    <span class="lesson-nav-label">Sonraki →</span>
+    <span class="lesson-nav-title">0-0 Hoş Geldin</span>
+  </button>
+</div>`;
+}
+
+/* ══════════════════════════════════════════
+   LESSON RENDERER
+══════════════════════════════════════════ */
+function renderLesson(id){
+  const lesson = LESSONS[id];
+  if(!lesson) return '<p>Ders bulunamadı.</p>';
+
+  const idx = LESSON_ORDER.indexOf(id);
+  const prevId = idx > 0 ? LESSON_ORDER[idx-1] : null;
+  const nextId = idx < LESSON_ORDER.length-1 ? LESSON_ORDER[idx+1] : null;
+  const mod = MODULE_INFO[lesson.module];
+
+  const prevBtn = prevId ? `<button class="lesson-nav-btn" onclick="navigate('${prevId}')">
+    <span class="lesson-nav-label">← Önceki</span>
+    <span class="lesson-nav-title">${LESSONS[prevId].title}</span>
+  </button>` : '<div></div>';
+
+  const nextBtn = nextId ? `<button class="lesson-nav-btn next" onclick="navigate('${nextId}')">
+    <span class="lesson-nav-label">Sonraki →</span>
+    <span class="lesson-nav-title">${LESSONS[nextId].title}</span>
+  </button>` : '<div></div>';
+
+  // Modülün son dersi mi?
+  const isLastOfModule = mod.lessons[mod.lessons.length - 1] === id;
+  // Kursun son dersi mi?
+  const isLastLesson = !nextId;
+
+  const moduleCompleteCard = isLastLesson ? `
+<div class="module-complete-card final">
+  <div class="module-complete-icon">🎉</div>
+  <div class="module-complete-body">
+    <div class="module-complete-title">Kurs tamamlandı!</div>
+    <div class="module-complete-desc">Bu sayfadaki içerik bir önizlemeydi. Gerçek öğrenme Claude Code'da başlıyor — materyalleri indir ve Claude ile çalış.</div>
+    <div class="module-complete-action" onclick="downloadAll(this)">📦 claude-code-rehberi.zip dosyasını indir</div>
+  </div>
+</div>` : isLastOfModule ? `
+<div class="module-complete-card">
+  <div class="module-complete-icon">✓</div>
+  <div class="module-complete-body">
+    <div class="module-complete-title">Modül ${lesson.module} bitti</div>
+    <div class="module-complete-desc">Sıradaki: <strong>Modül ${lesson.module + 1} — ${MODULE_INFO[lesson.module + 1]?.title}</strong></div>
+  </div>
+</div>` : '';
+
+  return `
+<div class="lesson-header">
+  <div class="lesson-breadcrumb">
+    <a href="#home" onclick="navigate('home')">Ana Sayfa</a>
+    <span>›</span>
+    <a href="#${mod.lessons[0]}" onclick="navigate('${mod.lessons[0]}')">Modül ${lesson.module}: ${mod.title}</a>
+    <span>›</span>
+    Ders ${lesson.num}
+  </div>
+  <h1 class="lesson-title">${lesson.title}</h1>
+  <div class="lesson-meta">
+    <span class="lesson-badge">Modül ${lesson.module}</span>
+    <span class="lesson-badge">Ders ${lesson.num}</span>
+  </div>
+</div>
+<div class="lesson-preview-banner">Bu içerik bir önizlemedir. Gerçek öğrenme Claude Code'da, indirdiğin ders materyalleriyle başlıyor.</div>
+<div class="lesson-body">${parseMarkdown(lesson.content)}</div>
+${moduleCompleteCard}
+<div class="lesson-nav">${prevBtn}${nextBtn}</div>`;
+}
+
+/* ══════════════════════════════════════════
+   TOC
+══════════════════════════════════════════ */
+function buildTOC(id){
+  const tocList = document.getElementById('toc-list');
+  if(!tocList) return;
+
+  if(id === 'home'){
+    tocList.innerHTML = `
+      <li><a class="toc-link" href="javascript:void(0)" onclick="scrollToEl('home-hero')">Giriş</a></li>
+      <li><a class="toc-link" href="javascript:void(0)" onclick="scrollToEl('howstart')">Nasıl Başlanır?</a></li>
+      <li><a class="toc-link" href="javascript:void(0)" onclick="scrollToEl('features')">Nasıl Çalışır?</a></li>
+      <li><a class="toc-link" href="javascript:void(0)" onclick="scrollToEl('modules')">Modüller</a></li>
+      <li><a class="toc-link" href="javascript:void(0)" onclick="scrollToEl('faq')">Sık Sorulan Sorular</a></li>`;
+    return;
+  }
+
+  const lesson = LESSONS[id];
+  if(!lesson){ tocList.innerHTML = ''; return; }
+
+  const h2s = [...lesson.content.matchAll(/^## (.+)$/gm)].map(m=>m[1]);
+  if(h2s.length === 0){ tocList.innerHTML = ''; return; }
+
+  tocList.innerHTML = h2s.map(h=>`<li><a class="toc-link" href="javascript:void(0)">${h}</a></li>`).join('');
+
+  // After render, attach scroll links to actual headings
+  setTimeout(()=>{
+    const headings = document.querySelectorAll('.lesson-body h2');
+    const links = tocList.querySelectorAll('.toc-link');
+    links.forEach((link, j)=>{
+      if(headings[j]){
+        link.onclick = e => { e.preventDefault(); headings[j].scrollIntoView({behavior:'smooth', block:'start'}); };
+      }
+    });
+
+    // Scroll spy
+    const obs = new IntersectionObserver(entries=>{
+      entries.forEach(e=>{
+        if(e.isIntersecting){
+          const idx = [...headings].indexOf(e.target);
+          links.forEach((l,j)=>l.classList.toggle('active', j===idx));
+        }
+      });
+    },{rootMargin:'-20% 0px -70% 0px'});
+    headings.forEach(h=>obs.observe(h));
+  }, 100);
+}
+
+/* ══════════════════════════════════════════
+   SIDEBAR ACTIVE STATE
+══════════════════════════════════════════ */
+function setNavActive(id){
+  document.querySelectorAll('.nav-lesson, .nav-home').forEach(el=>el.classList.remove('active'));
+  if(id === 'home'){
+    document.getElementById('nav-home')?.classList.add('active');
+    return;
+  }
+  // Find and activate lesson link, open its module
+  document.querySelectorAll('.nav-lesson').forEach(el=>{
+    if(el.getAttribute('href') === '#'+id){
+      el.classList.add('active');
+      const lessonsEl = el.closest('.nav-lessons');
+      if(lessonsEl && !lessonsEl.classList.contains('open')){
+        lessonsEl.classList.add('open');
+        const toggle = lessonsEl.previousElementSibling;
+        if(toggle) toggle.classList.add('open');
+      }
+    }
+  });
+}
+
+/* ══════════════════════════════════════════
+   ROUTER
+══════════════════════════════════════════ */
+function navigate(id, pushState=true){
+  if(pushState) history.pushState(null, '', '#'+id);
+
+  const main = document.getElementById('main');
+  main.innerHTML = id === 'home' ? renderHome() : renderLesson(id);
+  main.scrollTop = 0;
+  window.scrollTo(0,0);
+
+  setNavActive(id);
+  buildTOC(id);
+
+  // Close mobile sidebar
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
+}
+
+window.addEventListener('popstate', ()=>{
+  const id = (location.hash || '#home').slice(1) || 'home';
+  navigate(id, false);
+});
+
+/* ══════════════════════════════════════════
+   MODULE TOGGLE
+══════════════════════════════════════════ */
+function toggleModule(btn){
+  btn.classList.toggle('open');
+  const lessons = btn.nextElementSibling;
+  lessons.classList.toggle('open');
+}
+
+/* ══════════════════════════════════════════
+   THEME
+══════════════════════════════════════════ */
+function toggleTheme(){
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  document.getElementById('themeBtn').textContent = isDark ? '🌙' : '☀️';
+  localStorage.setItem('theme', isDark ? 'light' : 'dark');
+}
+(function(){
+  const saved = localStorage.getItem('theme');
+  if(saved){
+    document.documentElement.setAttribute('data-theme', saved);
+    document.getElementById('themeBtn').textContent = saved === 'dark' ? '☀️' : '🌙';
+  }
+})();
+
+/* ══════════════════════════════════════════
+   SCROLL TO SECTION
+══════════════════════════════════════════ */
+function scrollToEl(id){
+  const el = document.getElementById(id);
+  if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+  return false;
+}
+
+/* ══════════════════════════════════════════
+   MOBILE SIDEBAR
+══════════════════════════════════════════ */
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('open');
+}
+
+/* ══════════════════════════════════════════
+   DOWNLOAD ALL LESSONS AS ZIP
+══════════════════════════════════════════ */
+async function downloadAll(btn){
+  const origText = btn.innerHTML;
+  btn.innerHTML = '<span>⏳</span> Hazırlanıyor...';
+  btn.classList.add('loading');
+
+  const zip = new JSZip();
+
+  // ── Ders dosyaları → lessons/MODUL-X/ ──
+  const folderMap = {0:'MODUL-0',1:'MODUL-1',2:'MODUL-2',3:'MODUL-3',4:'MODUL-4'};
+  const fileNames = {
+    'lesson-0-0':'00-hos-geldin.md','lesson-0-1':'01-neden-claude-code.md','lesson-0-2':'02-buyuk-resim.md',
+    'lesson-1-1':'03-kurulum.md','lesson-1-2':'04-indir-ve-basla.md','lesson-1-3':'05-ilk-oturum.md','lesson-1-4':'06-calisma-alani.md',
+    'lesson-2-1':'07-dosyalarla-calis.md','lesson-2-2':'08-komutlar.md','lesson-2-3':'09-claude-hafiza.md',
+    'lesson-3-1':'10-skills.md','lesson-3-2':'11-ajanlar.md','lesson-3-3':'12-plan-modu.md',
+    'lesson-4-1':'13-sistem-dusuncesi.md','lesson-4-2':'14-kendi-is-akisim.md','lesson-4-3':'15-sonraki-adimlar.md'
+  };
+
+  for(const [id, lesson] of Object.entries(LESSONS)){
+    const subfolder = folderMap[lesson.module];
+    const fname = fileNames[id] || id+'.md';
+    const mdContent = `# ${lesson.title}\n\n${lesson.content}`;
+    zip.folder('lessons').folder(subfolder).file(fname, mdContent);
+  }
+
+  // ── .claude/SCRIPT_INSTRUCTIONS.md ──
+  zip.folder('.claude').file('SCRIPT_INSTRUCTIONS.md',
+`# Öğretim Talimatları
+
+Claude Code Rehberi kursunda ders veriyorsun. Bu talimatlara tam olarak uy.
+
+## Temel Kurallar
+
+### 1. Dördüncü Duvarı Kırma
+- "Script", "talimatlar" veya "öğretim rehberine göre" gibi ifadeler kullanma
+- "Ders dosyasında şöyle yazıyor" deme
+- Ders başladığında hemen öğretmeye başla
+- Sen eğitmensin — doğal konuş
+
+### 2. İşaretler
+
+**DÜŞÜN:** veya **WAIT:** — Dur ve öğrencinin yanıtını bekle. Yanıt gelmeden devam etme.
+
+**CEVAPLA:** veya **USER:** — Beklenen öğrenci yanıtı. Farklı ifade ederlerse sorun değil.
+
+**İZLE:** veya **ACTION:** — Yapman gereken bir şey (dosya oluştur, analiz et, göster). Yap, sonra devam et.
+
+### 3. Tempo
+- Her DÜŞÜN/WAIT noktasında gerçekten bekle
+- İçeriği aceleyle geçme
+- Öğrenci kafası karışmış görünürse devam etmeden açıkla
+- Heyecanlarsa sen de heyecanlan
+
+### 4. Beklenmedik Girdi
+- Scriptte olmayan bir soru sorarlarsa doğal cevap ver, sonra derse dön
+- İleri atlamak isterlerse nazikçe yönlendir
+- Takılırlarsa cevabı vermek yerine ipucu ver
+
+### 5. Ton
+- Sıcak ve samimi
+- Özgüvenli ama kibirli değil
+- Yüreklendirici ama aşırıya kaçmayan
+- Teknik terimleri her zaman parantez içinde açıkla: "terminal (komut ekranı)"
+- Tablolar ve listeler kullan, uzun paragraflardan kaçın
+
+## Başarı Kriteri
+Her dersin sonunda öğrenci o dersin konusunu anlayıp uygulamış olmalı.
+`);
+
+  // ── Slash komutları → .claude/commands/baslat-X-X.md ──
+  const cmdDefs = [
+    ['baslat-0-0','0-0','Hoş Geldin','lessons/MODUL-0/00-giris.md','0-1'],
+    ['baslat-0-1','0-1','Neden Claude Code?','lessons/MODUL-0/01-neden-claude-code.md','0-2'],
+    ['baslat-0-2','0-2','Büyük Resim','lessons/MODUL-0/02-buyuk-resim.md','1-1'],
+    ['baslat-1-1','1-1','Kurulum','lessons/MODUL-1/03-kurulum.md','1-2'],
+    ['baslat-1-2','1-2','İndir ve Başla','lessons/MODUL-1/04-indir-ve-basla.md','1-3'],
+    ['baslat-1-3','1-3','İlk Oturum','lessons/MODUL-1/05-ilk-oturum.md','1-4'],
+    ['baslat-1-4','1-4','Görsel Çalışma Alanı','lessons/MODUL-1/06-calisma-alani.md','2-1'],
+    ['baslat-2-1','2-1','Dosyalarla Çalışmak','lessons/MODUL-2/07-dosyalarla-calis.md','2-2'],
+    ['baslat-2-2','2-2','Temel Komutlar','lessons/MODUL-2/08-komutlar.md','2-3'],
+    ['baslat-2-3','2-3','CLAUDE.md — Hafıza','lessons/MODUL-2/09-claude-hafiza.md','3-1'],
+    ['baslat-3-1','3-1','Skills','lessons/MODUL-3/10-skills.md','3-2'],
+    ['baslat-3-2','3-2','Ajanlar','lessons/MODUL-3/11-ajanlar.md','3-3'],
+    ['baslat-3-3','3-3','Plan Modu','lessons/MODUL-3/12-plan-modu.md','4-1'],
+    ['baslat-4-1','4-1','Sistem Düşüncesi','lessons/MODUL-4/13-sistem-dusuncesi.md','4-2'],
+    ['baslat-4-2','4-2','Kendi İş Akışım','lessons/MODUL-4/14-kendi-is-akisim.md','4-3'],
+    ['baslat-4-3','4-3','Sonraki Adımlar','lessons/MODUL-4/15-sonraki-adimlar.md',''],
+  ];
+
+  // /devam komutu
+  zip.folder('.claude').folder('commands').file('devam.md',
+`Kaldığım Yerden Devam Et
+
+Bunu sessizce yap, ne yaptığını açıklama:
+
+1. \`ILERLEME.md\` dosyasını oku
+2. \`.claude/SCRIPT_INSTRUCTIONS.md\` dosyasını oku
+3. Dosya varsa: "Kaldığın yer: Ders [X-X] görünüyor. Devam edelim mi?" diye sor, onay verince ilgili dersi başlat
+4. Dosya yoksa: "Henüz ilerleme kaydın yok. Baştan başlamak için \`/baslat-0-0\` yaz." de
+`);
+
+  for(const [cmd, num, title, file, next] of cmdDefs){
+    const nextLine = next
+      ? `4. ILERLEME.md dosyasını güncelle: Son tamamlanan: ${num}, Sonraki: ${next} — öğrenciye '/baslat-${next.replace('-','-')}' yazmasını söyle.`
+      : '4. Bu kursun son dersidir. Tebrikler! ILERLEME.md dosyasına "Kurs tamamlandı" yaz.';
+    zip.folder('.claude').folder('commands').file(`${cmd}.md`,
+`Ders ${num}: ${title} — Başlat
+
+Bunu sessizce yap, ne yaptığını açıklama:
+
+1. \`${file}\` dosyasını oku
+2. \`.claude/SCRIPT_INSTRUCTIONS.md\` dosyasını oku
+3. Dersi hemen başlat — giriş cümlesi olmadan, doğrudan dersin ilk satırından başla
+${nextLine}
+`);
+  }
+
+  // ── Boş yardımcı klasörler (cowork yapısı gibi) ──
+  const emptyFolders = {
+    'scenarios': 'Alıştırma dosyaları buraya gelir. Her İZLE adımında kullanılır.',
+    'skills':    'Claude\'a öğrettiğin skill dosyaları buraya kaydedilir.',
+    'inbox':     'Hızlı yakalama klasörü. "Şimdi düşündüm, sonra işleyeceğim."',
+    'outputs':   'Claude\'un ürettiği çıktı dosyaları buraya gelir.',
+    'processed': 'İşlenmiş dosyalar buraya taşınır.',
+    'reference': 'Referans materyaller: cheat sheet, kaynak listesi vb.'
+  };
+  for(const [name, desc] of Object.entries(emptyFolders)){
+    zip.folder(name).file('BENI-OKU.md', `# ${name}/\n\n${desc}\n`);
+  }
+
+  // START-HERE.md (kök dizinde — ilk açılışta görünsün)
+  zip.file('START-HERE.md', `# Claude Code Rehberi
+
+Türkçe, teknik bilgi gerektirmeyen, yaparak öğreten Claude Code kursu.
+
+## Nasıl Başlanır?
+
+Claude Code'u aç (terminalde \`claude\` yaz) ve şunu yaz:
+
+    START-HERE.md dosyasını oku ve kursa başla
+
+Belirli bir derse atlamak için:
+
+    START-HERE.md dosyasını oku ve ders 2-2'den başla
+
+## Gezinme Komutları
+
+- **"başla"** → En baştan başla
+- **"ders 1-2"** → Belirli bir derse atla
+- **"devam"** veya **"sonraki ders"** → Bir sonraki derse geç
+- **"kaldığım yerden devam et"** → İlerleme dosyasını oku, kaldığın yerden başla
+- **"modül 3"** → O modülün ilk dersine git
+
+---
+
+## Kurs Haritası — 15 Ders, 5 Modül
+
+### Modül 0: Neden? (~20 dk)
+| Ders | Konu | Dosya |
+|------|------|-------|
+| 0-0 | Kurs nasıl çalışır? | lessons/MODUL-0/00-hos-geldin.md |
+| 0-1 | ChatGPT'den farkı nedir? | lessons/MODUL-0/01-neden-claude-code.md |
+| 0-2 | Claude Code nasıl "düşünür"? | lessons/MODUL-0/02-buyuk-resim.md |
+
+### Modül 1: İlk Temas (~40 dk)
+| Ders | Konu | Dosya |
+|------|------|-------|
+| 1-1 | Kurulum — terminal nedir? | lessons/MODUL-1/03-kurulum.md |
+| 1-2 | İndir ve Başla — ZIP + claude komutu | lessons/MODUL-1/04-indir-ve-basla.md |
+| 1-3 | İlk oturum — ilk komut | lessons/MODUL-1/05-ilk-oturum.md |
+| 1-4 | Görsel çalışma alanı | lessons/MODUL-1/06-calisma-alani.md |
+
+### Modül 2: Temel Beceriler (~45 dk)
+| Ders | Konu | Dosya |
+|------|------|-------|
+| 2-1 | @ sembolü ve 5 temel desen | lessons/MODUL-2/07-dosyalarla-calis.md |
+| 2-2 | En önemli 8 komut + klavye kısayolları | lessons/MODUL-2/08-komutlar.md |
+| 2-3 | CLAUDE.md — projenin hafızası | lessons/MODUL-2/09-claude-hafiza.md |
+
+### Modül 3: Güç Özellikleri (~45 dk)
+| Ders | Konu | Dosya |
+|------|------|-------|
+| 3-1 | Skills — Claude'a iş öğretmek | lessons/MODUL-3/10-skills.md |
+| 3-2 | Ajanlar — paralel çalışma | lessons/MODUL-3/11-ajanlar.md |
+| 3-3 | Plan Modu — önce planla | lessons/MODUL-3/12-plan-modu.md |
+
+### Modül 4: Kendi Sistemin (~40 dk)
+| Ders | Konu | Dosya |
+|------|------|-------|
+| 4-1 | Sistem düşüncesi — Agent Harness | lessons/MODUL-4/13-sistem-dusuncesi.md |
+| 4-2 | Kendi iş akışını tasarla | lessons/MODUL-4/14-kendi-is-akisim.md |
+| 4-3 | Sonraki adımlar | lessons/MODUL-4/15-sonraki-adimlar.md |
+
+---
+
+## İlerleme Takibi
+
+Her dersi tamamladıktan sonra bu klasördeki ILERLEME.md dosyasını güncelle:
+
+    # İlerleme
+    Son tamamlanan ders: 1-2
+    Sonraki ders: 1-3
+    Tarih: [bugünün tarihi]
+
+Dosya yoksa oluştur. Her ders geçişinde güncelle.
+
+Öğrenci "kaldığım yerden devam et" yazarsa:
+1. ILERLEME.md dosyasını oku
+2. "Kaldığın yer: Ders X-X. Devam edelim mi?" diye sor
+3. Onay verirse ilgili dersi yükle
+
+---
+
+## Öğretim Talimatları (Claude için)
+
+### İşaretler
+- DÜŞÜN → Gerçekten dur. Öğrenci yanıt verene kadar devam etme.
+- İZLE   → Bir şey yap — dosya oluştur, analiz et, göster.
+- CEVAPLA → Beklenen yanıt türü. Her yanıt kabul edilir.
+
+### Temel Kurallar
+1. DÜŞÜN.de gerçekten bekle — yanıt gelmeden devam etme
+2. Dördüncü duvarı kırma — sadece öğret
+3. Sohbet dili kullan — öğretmen değil, yardımcı bir arkadaş
+4. Her teknik terimi açıkla — örnek: "terminal (siyah komut ekranı)"
+5. Tablolar tercih et — uzun paragraflar yerine
+
+### Geçişler
+- Her dersin sonunda öğrenci bir sonraki ders kodunu yazar (örn: "ders 1-2")
+- "devam" veya "sonraki" yazdığında bir sonraki derse geç
+- Her ders geçişinde ILERLEME.md dosyasını güncelle
+
+---
+
+## Başlamak İçin
+
+Önce ILERLEME.md dosyasının var olup olmadığını kontrol et.
+
+- Varsa: "Kaldığın yer: Ders X-X görünüyor. Oradan devam edelim mi, yoksa başka bir yerden mi başlamak istiyorsun?" diye sor.
+- Yoksa: "Claude Code Rehberi'ne hoş geldin! 'başla' yazarak Ders 0'dan başlayabilirsin, ya da 'ders [numara]' yazarak istediğin derse atlayabilirsin." diye sor.
+
+Sonra bekle.
+`);
+
+  const blob = await zip.generateAsync({type:'blob'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'claude-code-rehberi.zip';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  btn.classList.remove('loading');
+  btn.innerHTML = '<span>✓</span> İndirildi!';
+  setTimeout(()=>{ btn.innerHTML = origText; }, 3000);
+}
+
+/* ══════════════════════════════════════════
+   INIT
+══════════════════════════════════════════ */
+(function(){
+  const id = (location.hash || '#home').slice(1) || 'home';
+  navigate(id, false);
+})();
+</script>
+</body>
+</html>
