@@ -3136,6 +3136,104 @@ ${nextLine}
     zip.folder(name).file('BENI-OKU.md', `# ${name}/\n\n${desc}\n`);
   }
 
+  // ── yeni-kaynaklar/ (kurs sonrası kaynak ekleme sistemi) ──
+  zip.folder('yeni-kaynaklar').file('BENI-OKU.md',
+`# Yeni Kaynaklar Klasörü
+
+Bu klasöre yeni kaynaklar (PDF, DOCX, metin dosyası, web linki) bırak.
+
+Claude Code her oturum başında bu klasörü kontrol eder.
+Yeni dosya varsa sana gösterir, onayını alır, ilgili modüle ekler.
+
+---
+
+## Nasıl Kullanılır?
+
+### Yöntem 1 — Sadece dosya bırak
+Dosyayı bu klasöre koy. Claude hangi modüle ait olduğuna kendisi karar verir.
+
+### Yöntem 2 — Alt klasörle belirt (daha hızlı)
+Hangi modül için olduğunu söylemek istersen alt klasör oluştur:
+
+\`\`\`
+yeni-kaynaklar/
+├── modul-0/    ← "Neden?" modülü için
+├── modul-1/    ← Kurulum için
+├── modul-2/    ← Temel beceriler için
+├── modul-3/    ← Güç özellikleri için
+└── modul-4/    ← Sistem düşüncesi için
+\`\`\`
+
+### Yöntem 3 — Not bırak
+Dosyanın yanına aynı adda \`.meta.txt\` dosyası koy:
+
+\`\`\`
+yeni-kaynak.pdf
+yeni-kaynak.pdf.meta.txt  ← "Modül 3 ajanlar dersine ekle"
+\`\`\`
+
+---
+
+## İşlenen Dosyalar
+
+İşlendikten sonra dosyalar otomatik olarak \`islendi/\` klasörüne taşınır.
+`);
+  zip.folder('yeni-kaynaklar').folder('islendi').file('BENI-OKU.md',
+`# islendi/
+
+İşlenen kaynak dosyaları buraya taşınır.
+Silmek istemiyorsan burada arşiv olarak kalır.
+`);
+
+  // ── CLAUDE.md (kök dizin — oturum başı otomatik kontrol) ──
+  zip.file('CLAUDE.md',
+`# CLAUDE.md
+
+Bu dosya Claude Code'a bu klasörle nasıl çalışacağını anlatır.
+
+---
+
+## Oturum Başı Otomatik Kontrol
+
+Her yeni oturumda şunu yap:
+
+1. \`yeni-kaynaklar/\` klasörünü kontrol et (\`islendi/\` alt klasörü hariç)
+2. İçinde dosya varsa her birini oku
+3. Hangi modüle / derse ait olduğuna karar ver
+4. Bana şu formatta göster:
+
+\`\`\`
+📥 Yeni Kaynak Bulundu: [dosya adı]
+→ İlgili Modül: Modül X — Ders Y
+→ Eklenecek İçerik: [kısa özet]
+→ Onaylıyor musun?
+\`\`\`
+
+5. Onayımı aldıktan sonra ilgili ders dosyasını güncelle
+6. İşlenen dosyayı \`yeni-kaynaklar/islendi/\` klasörüne taşı
+
+Onaysız hiçbir ders dosyasını değiştirme.
+
+---
+
+## Modül Referansı
+
+| Modül | Konu | Klasör |
+|-------|------|--------|
+| 0 | Neden Claude Code? | \`lessons/MODUL-0/\` |
+| 1 | Kurulum & İlk Temas | \`lessons/MODUL-1/\` |
+| 2 | Temel Beceriler | \`lessons/MODUL-2/\` |
+| 3 | Güç Özellikleri | \`lessons/MODUL-3/\` |
+| 4 | Kendi Sistemin | \`lessons/MODUL-4/\` |
+
+---
+
+## Kurs Talimatları
+
+Kursa başlamak için \`START-HERE.md\` dosyasını oku.
+`);
+
+
   // START-HERE.md (kök dizinde — ilk açılışta görünsün)
   zip.file('START-HERE.md', `# Claude Code Rehberi
 
