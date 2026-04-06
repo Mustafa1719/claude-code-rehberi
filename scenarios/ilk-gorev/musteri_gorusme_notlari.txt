@@ -1,0 +1,8 @@
+Müşteri: ABC Şirketi / Ahmet Bey
+Görüşme tarihi: yakın zamanda
+Konu: yeni ürün teklifi
+
+Ahmet Bey fiyattan memnun değil. İndirim istedi.
+Teslimat süresini sordu — 2 hafta dedik, beğenmedi, 1 hafta istedi.
+Demo istedi, ayarlayacağız.
+Takip: Hasan arayacak.

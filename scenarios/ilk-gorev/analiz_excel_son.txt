@@ -1,0 +1,15 @@
+Müşteri Memnuniyet Analizi - Ham Veri
+
+Anket tarihi: Q3 2024
+Katılımcı sayısı: 47
+
+Genel memnuniyet: 7.2/10
+Ürün kalitesi: 8.1/10
+Teslimat hızı: 6.4/10
+Müşteri hizmetleri: 7.8/10
+Fiyat/performans: 6.9/10
+
+En çok şikayet edilen konu: teslimat gecikmesi
+En çok beğenilen konu: ürün kalitesi
+
+Not: Bu veriyi bir sunuma dönüştürmek gerekiyor.
