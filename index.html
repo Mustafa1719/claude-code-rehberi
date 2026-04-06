@@ -1543,7 +1543,7 @@ Araba kullanmayı öğrenirken motorun kaç parçadan oluştuğunu öğrenmezsin
 
 ---
 
-## 8 Kritik Komut
+## Kritik Komutlar
 
 | Komut | Ne Yapar | Ne Zaman Kullanırsın |
 |-------|---------|---------------------|
@@ -1552,6 +1552,10 @@ Araba kullanmayı öğrenirken motorun kaç parçadan oluştuğunu öğrenmezsin
 | /compact | Oturumu sıkıştır, alan aç | Bağlam dolmaya başladığında |
 | /clear | Her şeyi sil, sıfırdan başla | Yeni bir konuya geçerken |
 | /init | CLAUDE.md dosyasını otomatik oluştur | Yeni proje başlatırken |
+| /review | Kod incelemesi yap — detaylı analiz | Bir şeyi paylaşmadan önce |
+| /cost | Bu oturumda ne kadar harcandığını göster | Maliyet takibi |
+| /resume | Son oturumda kaldığın yerden devam et | Yarım kalan işe dönünce |
+| /btw | Mevcut işi bölmeden araya soru sor | Konuyu değiştirmeden ek soru |
 | /model | Kullandığın AI modelini değiştir | Hız/kalite dengelemi gerektiğinde |
 | /rewind | Son işlemi geri al | Hata yaptığında |
 | /help | Tüm komutları listele | Bir komut aradığında |
@@ -2590,6 +2594,21 @@ function renderHome(){
   <img src="hero.png" alt="Claude Code Rehberi" class="hero-image">
 </div>
 
+<div class="home-section" id="intro-video">
+  <h2 class="home-section-title">🎬 Başlamadan Önce Mutlaka İzle</h2>
+  <p style="color:var(--text-2);margin-bottom:20px;font-size:14px">Bu video Claude Code rehberini nasıl kullanacağını anlatıyor. İzledikten sonra bu videonun altında yer alan "Ders materyallerini indir" sekmesinden klasörü bilgisayarına indir.</p>
+  <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,0.3)">
+    <iframe
+      src="https://www.youtube.com/embed/vzgLj5GOP4o"
+      title="Claude Code Rehberi Nasıl Kullanılır?"
+      frameborder="0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowfullscreen
+      style="position:absolute;top:0;left:0;width:100%;height:100%">
+    </iframe>
+  </div>
+</div>
+
 <div class="home-section" id="howstart">
   <h2 class="home-section-title">Nasıl Başlanır?</h2>
   <p style="color:var(--text-2);margin-bottom:24px;font-size:14px">Claude Code kurulu olmalı. Henüz kurmadıysan <a href="#lesson-1-1" onclick="navigate('lesson-1-1')">Kurulum Rehberi</a>'ne bak.</p>
@@ -2875,6 +2894,7 @@ function buildTOC(id){
   if(id === 'home'){
     tocList.innerHTML = `
       <li><a class="toc-link" href="javascript:void(0)" onclick="scrollToEl('home-hero')">Giriş</a></li>
+      <li><a class="toc-link" href="javascript:void(0)" onclick="scrollToEl('intro-video')">🎬 Başlamadan Önce İzle</a></li>
       <li><a class="toc-link" href="javascript:void(0)" onclick="scrollToEl('howstart')">Nasıl Başlanır?</a></li>
       <li><a class="toc-link" href="javascript:void(0)" onclick="scrollToEl('features')">Nasıl Çalışır?</a></li>
       <li><a class="toc-link" href="javascript:void(0)" onclick="scrollToEl('modules')">Modüller</a></li>
@@ -3135,104 +3155,6 @@ ${nextLine}
   for(const [name, desc] of Object.entries(emptyFolders)){
     zip.folder(name).file('BENI-OKU.md', `# ${name}/\n\n${desc}\n`);
   }
-
-  // ── yeni-kaynaklar/ (kurs sonrası kaynak ekleme sistemi) ──
-  zip.folder('yeni-kaynaklar').file('BENI-OKU.md',
-`# Yeni Kaynaklar Klasörü
-
-Bu klasöre yeni kaynaklar (PDF, DOCX, metin dosyası, web linki) bırak.
-
-Claude Code her oturum başında bu klasörü kontrol eder.
-Yeni dosya varsa sana gösterir, onayını alır, ilgili modüle ekler.
-
----
-
-## Nasıl Kullanılır?
-
-### Yöntem 1 — Sadece dosya bırak
-Dosyayı bu klasöre koy. Claude hangi modüle ait olduğuna kendisi karar verir.
-
-### Yöntem 2 — Alt klasörle belirt (daha hızlı)
-Hangi modül için olduğunu söylemek istersen alt klasör oluştur:
-
-\`\`\`
-yeni-kaynaklar/
-├── modul-0/    ← "Neden?" modülü için
-├── modul-1/    ← Kurulum için
-├── modul-2/    ← Temel beceriler için
-├── modul-3/    ← Güç özellikleri için
-└── modul-4/    ← Sistem düşüncesi için
-\`\`\`
-
-### Yöntem 3 — Not bırak
-Dosyanın yanına aynı adda \`.meta.txt\` dosyası koy:
-
-\`\`\`
-yeni-kaynak.pdf
-yeni-kaynak.pdf.meta.txt  ← "Modül 3 ajanlar dersine ekle"
-\`\`\`
-
----
-
-## İşlenen Dosyalar
-
-İşlendikten sonra dosyalar otomatik olarak \`islendi/\` klasörüne taşınır.
-`);
-  zip.folder('yeni-kaynaklar').folder('islendi').file('BENI-OKU.md',
-`# islendi/
-
-İşlenen kaynak dosyaları buraya taşınır.
-Silmek istemiyorsan burada arşiv olarak kalır.
-`);
-
-  // ── CLAUDE.md (kök dizin — oturum başı otomatik kontrol) ──
-  zip.file('CLAUDE.md',
-`# CLAUDE.md
-
-Bu dosya Claude Code'a bu klasörle nasıl çalışacağını anlatır.
-
----
-
-## Oturum Başı Otomatik Kontrol
-
-Her yeni oturumda şunu yap:
-
-1. \`yeni-kaynaklar/\` klasörünü kontrol et (\`islendi/\` alt klasörü hariç)
-2. İçinde dosya varsa her birini oku
-3. Hangi modüle / derse ait olduğuna karar ver
-4. Bana şu formatta göster:
-
-\`\`\`
-📥 Yeni Kaynak Bulundu: [dosya adı]
-→ İlgili Modül: Modül X — Ders Y
-→ Eklenecek İçerik: [kısa özet]
-→ Onaylıyor musun?
-\`\`\`
-
-5. Onayımı aldıktan sonra ilgili ders dosyasını güncelle
-6. İşlenen dosyayı \`yeni-kaynaklar/islendi/\` klasörüne taşı
-
-Onaysız hiçbir ders dosyasını değiştirme.
-
----
-
-## Modül Referansı
-
-| Modül | Konu | Klasör |
-|-------|------|--------|
-| 0 | Neden Claude Code? | \`lessons/MODUL-0/\` |
-| 1 | Kurulum & İlk Temas | \`lessons/MODUL-1/\` |
-| 2 | Temel Beceriler | \`lessons/MODUL-2/\` |
-| 3 | Güç Özellikleri | \`lessons/MODUL-3/\` |
-| 4 | Kendi Sistemin | \`lessons/MODUL-4/\` |
-
----
-
-## Kurs Talimatları
-
-Kursa başlamak için \`START-HERE.md\` dosyasını oku.
-`);
-
 
   // START-HERE.md (kök dizinde — ilk açılışta görünsün)
   zip.file('START-HERE.md', `# Claude Code Rehberi
