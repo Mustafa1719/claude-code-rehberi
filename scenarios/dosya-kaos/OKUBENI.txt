@@ -1,0 +1,14 @@
+BU KLASÖR HAKKINDA
+
+Bu klasör "dosya-kaos" alıştırması için oluşturulmuştur.
+Ders 2-1: Dosyalarla Çalışmak
+
+Hedef: @ sembolünü kullanarak bu karmaşık klasörü organize et.
+
+İçinde ne var:
+- Karışık isimli notlar ve raporlar
+- Eski ve yeni versiyonlar iç içe
+- Farklı kategoriler (finans, müşteri, sunum, toplantı) tek klasörde
+- Bazı dosyalar arşivlenmeye aday
+
+Görevin: Bu dosyaları mantıklı alt klasörlere ayırt.
