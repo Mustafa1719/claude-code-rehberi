@@ -1,7 +1,7 @@
 # Ders 1-1: Kurulum
 
-> **Bu siteye Claude Code üzerinden ulaştıysan kurulumu zaten tamamladın.**
-> Bir sonraki derse geçebilirsin → **"ders 1-2" yaz**
+> **Bu siteye Claude Code üzerinden ulaştıysan kurulum ve indirme adımlarını zaten tamamladın.**
+> Doğrudan ilk göreve geçebilirsin → **"ders 1-3" yaz**
 
 ---
 

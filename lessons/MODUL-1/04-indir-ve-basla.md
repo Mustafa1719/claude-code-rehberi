@@ -1,5 +1,10 @@
 # Ders 1-2: İndir ve Başla
 
+> **Bu siteye Claude Code üzerinden ulaştıysan bu dersi zaten tamamladın.**
+> Bir sonraki derse geçebilirsin → **"ders 1-3" yaz**
+
+---
+
 *Tamamlama süresi: ~5 dakika · Ön koşul: Kurulum (Ders 1-1)*
 
 ---
